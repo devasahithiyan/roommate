@@ -1,5 +1,5 @@
 /* ----------------------------------------------------
-  BASIC RESET & TRANSITIONS
+  1. Basic Reset & Transitions
 ---------------------------------------------------- */
 * {
   box-sizing: border-box;
@@ -7,40 +7,19 @@
   padding: 0;
   transition: background-color 0.3s, color 0.3s;
 }
+html, body {
+  height: 100%;
+}
 body {
-  font-family: 'Helvetica Neue', Arial, sans-serif;
-  background: #fafafa;
+  font-family: 'Roboto', Arial, sans-serif;
+  background: #f9f9f9;
   color: #333;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 /* ----------------------------------------------------
-  HEADER
----------------------------------------------------- */
-header {
-  background: linear-gradient(135deg, #0050c8, #0080ff);
-  padding: 1.5rem;
-  text-align: center;
-  color: #fff;
-}
-header h1 {
-  margin-bottom: 0.5rem;
-}
-
-/* ----------------------------------------------------
-  MAIN
----------------------------------------------------- */
-main {
-  flex: 1;
-  padding: 1.5rem;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-/* ----------------------------------------------------
-  DARK MODE TOGGLE SWITCH
+  2. Dark Mode Toggle Switch
 ---------------------------------------------------- */
 .theme-toggle {
   position: fixed;
@@ -48,7 +27,7 @@ main {
   right: 1rem;
   display: flex;
   align-items: center;
-  z-index: 999;
+  z-index: 1000;
 }
 .theme-toggle .toggle-text {
   font-size: 0.9rem;
@@ -94,7 +73,7 @@ input:checked + .slider:before {
 }
 
 /* ----------------------------------------------------
-  LOADING OVERLAY & SPINNER
+  3. Loading Overlay & Spinner
 ---------------------------------------------------- */
 .loading-overlay {
   position: fixed;
@@ -102,7 +81,7 @@ input:checked + .slider:before {
   width: 100%; height: 100%;
   background: rgba(0,0,0,0.5);
   z-index: 9999;
-  display: flex;
+  display: none; /* hidden by default */
   justify-content: center;
   align-items: center;
 }
@@ -114,112 +93,146 @@ input:checked + .slider:before {
   animation: spin 1s linear infinite;
 }
 @keyframes spin {
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* ----------------------------------------------------
-  EXISTING USER CONTAINER
+  4. Header
 ---------------------------------------------------- */
-.existing-user-container {
+header {
+  background: linear-gradient(135deg, #0050c8, #0080ff);
+  text-align: center;
+  color: #fff;
+  padding: 2rem 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+header h1 {
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+
+/* ----------------------------------------------------
+  5. Main Container
+---------------------------------------------------- */
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 1000px;
+  margin: 1.5rem auto;
+  padding: 1.5rem;
+}
+
+/* ----------------------------------------------------
+  6. Card Container
+---------------------------------------------------- */
+.card {
   background: #fff;
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  opacity: 0;
+  animation: fadeInUp 0.4s ease forwards;
+  transform: translateY(20px);
 }
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.card h2 {
+  margin-top: 0;
+}
+
+/* ----------------------------------------------------
+  7. Existing User Container
+---------------------------------------------------- */
 .existing-user-container label {
   display: block;
-  margin: 0.75rem 0 0.2rem;
+  margin: 0.75rem 0 0.3rem;
   font-weight: 500;
 }
 .existing-user-container input[type="text"] {
   width: 100%;
   padding: 0.6rem;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #ccc;
-  margin-bottom: 0.75rem;
   font-size: 1rem;
-  background: #fafafa;
+  background: #fff;
+  margin-bottom: 0.75rem;
 }
 .existing-user-container button {
   background: #0080ff;
   color: #fff;
   border: none;
   padding: 0.7rem 1.5rem;
-  border-radius: 4px;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.3s;
 }
 .existing-user-container button:hover {
   background: #0066cc;
 }
 #existingUserResults {
   margin-top: 1rem;
-  color: #333;
   font-weight: 500;
 }
 
 /* ----------------------------------------------------
-  FORM CONTAINER
+  8. Multi-step Form
 ---------------------------------------------------- */
-.form-container {
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-.step-indicator {
+.form-container .step-indicator {
   text-align: center;
-  margin-bottom: 1rem;
   font-weight: bold;
+  margin-bottom: 1rem;
 }
-.progressbar {
+.form-container .progressbar {
   width: 100%;
   height: 6px;
   background: #e0e0e0;
-  margin-bottom: 20px;
   border-radius: 3px;
   overflow: hidden;
+  margin-bottom: 20px;
 }
-.progress {
+.form-container .progress {
   height: 100%;
   width: 0;
   background: #0080ff;
+  transition: width 0.3s;
 }
-/* Form Steps */
 .form-step {
   display: none;
 }
 .form-step.active {
   display: block;
 }
-/* Form Fields */
-form label {
+.form-container form label {
   display: block;
-  margin: 0.75rem 0 0.2rem;
+  margin: 0.75rem 0 0.3rem;
   font-weight: 500;
 }
-form input[type="text"],
-form input[type="number"],
-form input[type="date"],
-form select,
-form textarea {
+.form-container form input[type="text"],
+.form-container form input[type="number"],
+.form-container form input[type="date"],
+.form-container form select,
+.form-container form textarea {
   width: 100%;
-  padding: 0.6rem;
-  border-radius: 4px;
+  padding: 0.7rem;
+  border-radius: 6px;
   border: 1px solid #ccc;
-  margin-bottom: 0.75rem;
   font-size: 1rem;
-  background: #fafafa;
+  background: #fff;
+  margin-bottom: 0.75rem;
 }
-form textarea {
+.form-container form textarea {
   resize: vertical;
 }
-/* Buttons */
 .btns {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 1rem;
   margin-top: 1rem;
 }
 .next-btn,
@@ -228,8 +241,8 @@ form textarea {
   background: #0080ff;
   color: #fff;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
+  padding: 0.75rem 2rem;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.3s;
@@ -240,41 +253,53 @@ form textarea {
   background: #0066cc;
 }
 .prev-btn {
-  background: #888;
+  background: #bbb;
+  color: #333;
 }
 .prev-btn:hover {
-  background: #666;
+  background: #999;
+}
+.form-note {
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+  color: #666;
 }
 
 /* ----------------------------------------------------
-  MATCHES SECTION
+  9. Matches Section
 ---------------------------------------------------- */
 #results-section {
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
-  animation: fadeIn 0.5s ease forwards;
-  opacity: 0;
+  display: none; /* hidden until we have results */
 }
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
-#results-section h2 {
-  margin-top: 0;
+.matches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 .match {
-  padding: 1rem 0;
-  border-bottom: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fafafa;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  animation: fadeIn 0.5s ease forwards;
+  opacity: 0;
+  transform: translateY(10px);
 }
-.match:last-child {
-  border-bottom: none;
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.match h3 {
+  margin-top: 0;
+  font-size: 1.2rem;
 }
 .match-progress {
   height: 10px;
   width: 100%;
-  background: #e0e0e0;
+  background: #e5e5e5;
   margin: 0.5rem 0;
   border-radius: 5px;
   overflow: hidden;
@@ -285,36 +310,38 @@ form textarea {
   width: 0%;
   transition: width 0.4s;
 }
-
-/* ----------------------------------------------------
-  FOOTER
----------------------------------------------------- */
-footer {
-  text-align: center;
-  background: #f1f1f1;
-  padding: 1rem 0;
-  font-size: 0.9rem;
-  color: #555;
-  border-top: 1px solid #ccc;
+.match:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
 
 /* ----------------------------------------------------
-  DARK MODE
+  10. Footer
+---------------------------------------------------- */
+footer {
+  text-align: center;
+  background: #f0f0f0;
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: #555;
+  border-top: 1px solid #ddd;
+}
+
+/* ----------------------------------------------------
+  11. Dark Mode
 ---------------------------------------------------- */
 .dark-mode {
   background: #1e1e1e;
   color: #f0f0f0;
 }
-.dark-mode .existing-user-container,
-.dark-mode .form-container,
-.dark-mode #results-section {
+.dark-mode .card {
   background: #2c2c2c;
   color: #f0f0f0;
 }
-.dark-mode input,
-.dark-mode select,
-.dark-mode textarea,
-.dark-mode .existing-user-container input[type="text"] {
+.dark-mode .existing-user-container input[type="text"],
+.dark-mode .form-container form input,
+.dark-mode .form-container form select,
+.dark-mode .form-container form textarea {
   background: #3a3a3a;
   color: #f0f0f0;
   border: 1px solid #666;
@@ -323,31 +350,28 @@ footer {
   background: #555;
 }
 .dark-mode .progress {
-  background: #bb86fc; /* Purple accent */
+  background: #bb86fc; /* purple accent */
 }
-.dark-mode .slider {
-  background-color: #444;
+.dark-mode .spinner {
+  border-top: 8px solid #bb86fc;
 }
-.dark-mode input:checked + .slider {
-  background-color: #bb86fc;
+.dark-mode .match {
+  background: #2a2a2a;
 }
-.dark-mode .loading-overlay {
-  background: rgba(0,0,0,0.7);
+.dark-mode .match-progress {
+  background: #555;
+}
+.dark-mode .match-progress-bar {
+  background: #bb86fc;
+}
+.dark-mode footer {
+  background: #2a2a2a;
+  color: #bbb;
 }
 
 /* ----------------------------------------------------
-  RESPONSIVE
+  12. Misc Animations
 ---------------------------------------------------- */
-@media (max-width: 700px) {
-  .btns {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .prev-btn {
-    width: 100%;
-  }
-  .next-btn,
-  .submit-btn {
-    width: 100%;
-  }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

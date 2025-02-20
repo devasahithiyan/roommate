@@ -58,7 +58,7 @@ function hideLoading() {
 }
 
 /**************************************************************
-  4. Loading & Storing Users from Firebase & Static Data
+  4. Load & Store Users
 **************************************************************/
 let staticUsers = [];
 let firebaseUsers = [];
@@ -69,15 +69,17 @@ fetch("data.json")
   .then(data => { staticUsers = data; })
   .catch(err => console.error("Error loading JSON data:", err));
 
-// Fetch Firebase users
+// Fetch from Firestore
 async function fetchFirebaseUsers() {
   showLoading();
   try {
-    const querySnapshot = await getDocs(collection(window.db, "users"));
+    const snapshot = await getDocs(collection(window.db, "users"));
     firebaseUsers = [];
-    querySnapshot.forEach(doc => { firebaseUsers.push(doc.data()); });
-  } catch (err) {
-    console.error("Error fetching Firebase users:", err);
+    snapshot.forEach(doc => {
+      firebaseUsers.push(doc.data());
+    });
+  } catch (error) {
+    console.error("Error fetching Firebase users:", error);
   } finally {
     hideLoading();
   }
@@ -85,95 +87,63 @@ async function fetchFirebaseUsers() {
 fetchFirebaseUsers();
 
 /**************************************************************
-  5. Utility & Matching Functions
+  5. Utility & Matching
 **************************************************************/
-/**
- * Parse "700-1000" etc. -> {min:700, max:1000}
- */
 function parseBudget(budgetStr) {
   if (!budgetStr) return null;
   const nums = budgetStr.match(/\d+/g);
   if (!nums || nums.length < 2) return null;
   return { min: parseInt(nums[0], 10), max: parseInt(nums[1], 10) };
 }
-
-/**
- * Check if two budgets overlap
- */
 function budgetsOverlap(b1, b2) {
   if (!b1 || !b2) return true;
   return !(b1.max < b2.min || b2.max < b1.min);
 }
-
-/**
- * Transform a user/candidate object into a standard shape
- */
-function transformUser(obj) {
+function transformUser(u) {
   return {
-    fullName: obj.Name || obj.fullName || "",
-    gender: obj.Gender || obj.gender || "",
-    genderPref: obj.genderPref || obj["genderPref"] || "NoPreference",
-    age: obj.Age || obj.age || "",
-    homeCity: obj["Home city and State"] || obj.homeCity || "",
-    course: obj["UCD Course & Year of Study"] || obj.course || "",
-    contact: obj["Contact Information"] || obj.contact || "",
-    arrivalDate: obj["Expected Arrival Date in Ireland"] || obj.arrivalDate || "",
-    locationPref: obj["Preferred Location"] || obj.locationPref || "Any",
-    budget: obj["Budget Range(per month) (€)"] || obj.budget || "",
-    roomType: obj["Preferred Room Type"] || obj.roomType || "",
-    leaseDuration: obj["Lease Duration"] || obj.leaseDuration || "",
-    weekendPlans: obj["Weekend plans"] || obj.weekendPlans || "",
-    partTime: obj["Part time work"] || obj.partTime || "",
-    transport: obj["Preferred Mode of Transport"] || obj.transport || "",
-    guestsPolicy: obj["Guests Policy"] || obj.guestsPolicy || "",
-    cleanliness: obj["Cleanliness Level"] || obj.cleanliness || "",
-    sleepSchedule: obj["Sleep Schedue"] || obj.sleepSchedule || "",
-    smoking: obj["Smoking Preference"] || obj.smoking || "",
-    drinking: obj["Drinking Preference"] || obj.drinking || "",
-    diet: obj["Dietary Preference"] || obj.diet || "",
-    cooking: obj["Cooking Frequency"] || obj.cooking || "",
-    pets: obj["Pets Comfort"] || obj.pets || "",
-    languages: obj["Languages Spoken"] || obj.languages || "",
-    hobbies: obj["Hobbies & Interests"] || obj.hobbies || "",
-    additionalComments: obj.additionalComments || ""
+    fullName: u.Name || u.fullName || "",
+    gender: u.Gender || u.gender || "",
+    genderPref: u.genderPref || u["genderPref"] || "NoPreference",
+    age: u.Age || u.age || "",
+    homeCity: u["Home city and State"] || u.homeCity || "",
+    course: u["UCD Course & Year of Study"] || u.course || "",
+    contact: u["Contact Information"] || u.contact || "",
+    arrivalDate: u["Expected Arrival Date in Ireland"] || u.arrivalDate || "",
+    locationPref: u["Preferred Location"] || u.locationPref || "Any",
+    budget: u["Budget Range(per month) (€)"] || u.budget || "",
+    roomType: u["Preferred Room Type"] || u.roomType || "",
+    leaseDuration: u["Lease Duration"] || u.leaseDuration || "",
+    weekendPlans: u["Weekend plans"] || u.weekendPlans || "",
+    partTime: u["Part time work"] || u.partTime || "",
+    transport: u["Preferred Mode of Transport"] || u.transport || "",
+    guestsPolicy: u["Guests Policy"] || u.guestsPolicy || "",
+    cleanliness: u["Cleanliness Level"] || u.cleanliness || "",
+    sleepSchedule: u["Sleep Schedue"] || u.sleepSchedule || "",
+    smoking: u["Smoking Preference"] || u.smoking || "",
+    drinking: u["Drinking Preference"] || u.drinking || "",
+    diet: u["Dietary Preference"] || u.diet || "",
+    cooking: u["Cooking Frequency"] || u.cooking || "",
+    pets: u["Pets Comfort"] || u.pets || "",
+    languages: u["Languages Spoken"] || u.languages || "",
+    hobbies: u["Hobbies & Interests"] || u.hobbies || "",
+    additionalComments: u.additionalComments || ""
   };
 }
 
-/**
- * Improved matching algorithm:
- * - Hard filters:
- *   1) genderPref
- *   2) budget overlap
- *   3) leaseDuration
- *   4) locationPref
- * - Weighted preferences (cleanliness, smoking, drinking, etc.)
- * - Bonus for shared non-English languages
- */
 function calculateMatchScore(userObj, candidateObj) {
   const user = transformUser(userObj);
   const candidate = transformUser(candidateObj);
 
-  // 1) Gender preference
+  // Hard filters
   if (user.genderPref === "Same" && user.gender !== candidate.gender) return 0;
-
-  // 2) Budget overlap
   const userBudget = parseBudget(user.budget);
-  const candidateBudget = parseBudget(candidate.budget);
-  if (!budgetsOverlap(userBudget, candidateBudget)) return 0;
-
-  // 3) Lease Duration
+  const candBudget = parseBudget(candidate.budget);
+  if (!budgetsOverlap(userBudget, candBudget)) return 0;
   if (user.leaseDuration && candidate.leaseDuration &&
-      user.leaseDuration !== candidate.leaseDuration) {
-    return 0;
-  }
+      user.leaseDuration !== candidate.leaseDuration) return 0;
+  if (user.locationPref !== "Any" && user.locationPref !== candidate.locationPref) return 0;
 
-  // 4) Location preference
-  if (user.locationPref !== "Any" &&
-      user.locationPref !== candidate.locationPref) {
-    return 0;
-  }
-
-  // Soft scoring
+  // Weighted scoring
   let score = 0;
   if (user.cleanliness === candidate.cleanliness) score += 10;
   if (user.sleepSchedule === candidate.sleepSchedule) score += 8;
@@ -200,30 +170,22 @@ function calculateMatchScore(userObj, candidateObj) {
     score += 2;
   }
 
-  // Languages
-  //   - Big bonus for shared non-English languages
-  //   - Smaller bonus if only English is in common
+  // Language weighting
   const userLangs = user.languages.toLowerCase().split(",").map(x => x.trim());
   const candLangs = candidate.languages.toLowerCase().split(",").map(x => x.trim());
-
-  // Filter out "english" from the arrays
-  const userNonEnglish = userLangs.filter(l => l !== "english" && l);
-  const candNonEnglish = candLangs.filter(l => l !== "english" && l);
-
-  // If we share at least 1 non-English language => big bonus
-  const commonNonEng = userNonEnglish.filter(lang => candNonEnglish.includes(lang));
+  const userNonEng = userLangs.filter(l => l !== "english" && l);
+  const candNonEng = candLangs.filter(l => l !== "english" && l);
+  const commonNonEng = userNonEng.filter(lang => candNonEng.includes(lang));
+  // If they share one or more non-English languages, big bonus
   if (commonNonEng.length > 0) {
-    // For each shared non-English language, +12
     score += commonNonEng.length * 12;
   }
-
-  // Otherwise, check if they only share "english"
-  if (userLangs.includes("english") && candLangs.includes("english") && commonNonEng.length === 0) {
-    // smaller bonus for "only english" in common
+  // If they don't share non-English, but both have "english"
+  if (commonNonEng.length === 0 && userLangs.includes("english") && candLangs.includes("english")) {
     score += 5;
   }
 
-  // Hobbies
+  // Hobbies overlap
   const userHobbies = user.hobbies.toLowerCase().split(",").map(x => x.trim());
   const candHobbies = candidate.hobbies.toLowerCase().split(",").map(x => x.trim());
   const commonHobbies = userHobbies.filter(h => candHobbies.includes(h));
@@ -233,36 +195,34 @@ function calculateMatchScore(userObj, candidateObj) {
 }
 
 /**************************************************************
-  6. Displaying Matches
+  6. Display Matches
 **************************************************************/
 const resultsSection = document.getElementById("results-section");
 const resultsDiv = document.getElementById("results");
 
 function displayTopMatches(scoredMatches) {
-  // Clear old results
+  // Clear old
   resultsDiv.innerHTML = "";
-  resultsSection.style.display = "block"; // show container
+  resultsSection.style.display = "block";
 
   if (scoredMatches.length === 0) {
     resultsDiv.innerHTML = "<p>No matches found based on your criteria.</p>";
     return;
   }
 
-  // find max
+  // Highest score -> 100%
   const maxScore = Math.max(...scoredMatches.map(m => m.score));
-  const top = scoredMatches
+  const mapped = scoredMatches
     .map(m => {
-      const percentage = (maxScore === 0 ? 0 : (m.score / maxScore) * 100).toFixed(0);
-      return { candidate: m.candidate, percentage: parseInt(percentage, 10) };
+      const pct = maxScore ? ((m.score / maxScore) * 100).toFixed(0) : 0;
+      return { candidate: m.candidate, percentage: parseInt(pct, 10) };
     })
     .sort((a, b) => b.percentage - a.percentage);
 
-  // show all (or top 5) – choose whichever you prefer:
-  const topMatches = top.slice(0, 5); // top 5
-  // or show all:
-  // const topMatches = top;
+  // take top 5
+  const topFive = mapped.slice(0, 5);
 
-  topMatches.forEach(match => {
+  topFive.forEach(match => {
     const c = match.candidate;
     const name = c.Name || c.fullName || "Unknown";
     const course = c["UCD Course & Year of Study"] || c.course || "N/A";
@@ -270,9 +230,9 @@ function displayTopMatches(scoredMatches) {
     const contact = c["Contact Information"] || c.contact || "N/A";
     const hobbies = c["Hobbies & Interests"] || c.hobbies || "N/A";
 
-    const matchEl = document.createElement("div");
-    matchEl.classList.add("match");
-    matchEl.innerHTML = `
+    const matchDiv = document.createElement("div");
+    matchDiv.classList.add("match");
+    matchDiv.innerHTML = `
       <h3>${name} (Match: ${match.percentage}%)</h3>
       <div class="match-progress">
         <div class="match-progress-bar" style="width: ${match.percentage}%;"></div>
@@ -282,12 +242,15 @@ function displayTopMatches(scoredMatches) {
       <p><strong>Hobbies:</strong> ${hobbies}</p>
       <p><strong>Contact:</strong> ${contact}</p>
     `;
-    resultsDiv.appendChild(matchEl);
+    resultsDiv.appendChild(matchDiv);
   });
+
+  // Finally, scroll to the card section
+  resultsSection.scrollIntoView({ behavior: "smooth" });
 }
 
 /**************************************************************
-  7. "Check Existing User" Feature
+  7. "Check Existing User"
 **************************************************************/
 const checkUserBtn = document.getElementById("checkUserBtn");
 const existingNameInput = document.getElementById("existingName");
@@ -308,12 +271,13 @@ checkUserBtn.addEventListener("click", async () => {
     return;
   }
 
-  // fetch latest firebase data
+  showLoading();
   await fetchFirebaseUsers();
+  hideLoading();
 
-  const foundInStatic = findUserByName(searchName, staticUsers);
-  const foundInFirebase = findUserByName(searchName, firebaseUsers);
-  const foundUser = foundInStatic || foundInFirebase;
+  const foundStatic = findUserByName(searchName, staticUsers);
+  const foundFirebase = findUserByName(searchName, firebaseUsers);
+  const foundUser = foundStatic || foundFirebase;
 
   if (!foundUser) {
     existingUserResults.innerHTML = `<p style="color:red">User not found. Please register below!</p>`;
@@ -322,27 +286,24 @@ checkUserBtn.addEventListener("click", async () => {
     existingUserResults.innerHTML = `<p style="color:green">User found! Showing matches...</p>`;
     const userObj = transformUser(foundUser);
 
-    // Exclude foundUser from the match pool
+    // Filter out foundUser from the match pool
     const allUsers = [...staticUsers, ...firebaseUsers].filter(u =>
       (u.Name || u.fullName) !== (foundUser.Name || foundUser.fullName)
     );
-    // Calculate match score
-    const scored = allUsers.map(candidate => ({
-      candidate,
-      score: calculateMatchScore(userObj, candidate)
-    })).filter(m => m.score > 0);
+    const scored = allUsers
+      .map(candidate => ({ candidate, score: calculateMatchScore(userObj, candidate) }))
+      .filter(m => m.score > 0);
 
     displayTopMatches(scored);
   }
 });
 
 /**************************************************************
-  8. Handle New User Registration & Matching
+  8. New User Registration & Matching
 **************************************************************/
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // Build user object
   const newUser = {
     fullName: document.getElementById("fullName").value,
     gender: document.getElementById("gender").value,
@@ -374,17 +335,15 @@ form.addEventListener("submit", async (e) => {
 
   showLoading();
   try {
-    // Add to Firestore
     await addDoc(collection(window.db, "users"), newUser);
-    // Refresh firebase users
     await fetchFirebaseUsers();
-  } catch (error) {
-    console.error("Error adding document:", error);
+  } catch (err) {
+    console.error("Error adding user:", err);
   } finally {
     hideLoading();
   }
 
-  // Exclude new user from match pool
+  // Exclude newUser from match pool
   const allUsersExceptSelf = [...staticUsers, ...firebaseUsers].filter(u =>
     (u.Name || u.fullName) !== newUser.fullName
   );
@@ -396,5 +355,4 @@ form.addEventListener("submit", async (e) => {
     .filter(m => m.score > 0);
 
   displayTopMatches(scoredMatches);
-  document.getElementById("results-section").scrollIntoView({ behavior: "smooth" });
 });

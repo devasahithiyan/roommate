@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>UCD Roommate Finder</title>
 
-  <!-- Link to your external CSS -->
+  <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css" />
 
   <!-- Firebase App (the core Firebase SDK) and Firestore -->
@@ -23,7 +23,7 @@
       appId: "1:583407477445:web:8ec652955ce67ed49806ac"
     };
 
-    // Initialize Firebase and Firestore, then attach to window for global access
+    // Initialize Firebase and Firestore, attach globally
     const app = initializeApp(firebaseConfig);
     window.db = getFirestore(app);
   </script>
@@ -39,7 +39,7 @@
   </div>
 
   <!-- Loading Overlay -->
-  <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+  <div id="loadingOverlay" class="loading-overlay">
     <div class="spinner"></div>
   </div>
 
@@ -49,8 +49,8 @@
   </header>
 
   <main>
-    <!-- Existing User Search -->
-    <section class="existing-user-container">
+    <!-- Existing User Section -->
+    <section class="card existing-user-container">
       <h2>Check Existing User</h2>
       <p>Already filled in your details before? Search by your name!</p>
       <label for="existingName">Enter Your Name:</label>
@@ -59,8 +59,8 @@
       <div id="existingUserResults"></div>
     </section>
 
-    <!-- Multi-step Form Container -->
-    <section class="form-container" id="formContainer">
+    <!-- Multi-step Form -->
+    <section class="card form-container" id="formContainer">
       <div class="step-indicator" id="stepIndicator"></div>
       <div class="progressbar">
         <div class="progress" id="formProgress"></div>
@@ -71,6 +71,7 @@
           <h2>Step 1: Basic Information</h2>
           <label for="fullName">Full Name</label>
           <input type="text" id="fullName" name="fullName" required />
+
           <label for="gender">Gender</label>
           <select id="gender" name="gender" required>
             <option value="">--Select--</option>
@@ -78,22 +79,29 @@
             <option value="Female">Female</option>
             <option value="Other">Other</option>
           </select>
+
           <label for="genderPref">Roommate Gender Preference</label>
           <select id="genderPref" name="genderPref" required>
             <option value="">--Select--</option>
             <option value="Same">Same Gender</option>
             <option value="NoPreference">No Preference</option>
           </select>
+
           <label for="age">Age</label>
           <input type="number" id="age" name="age" required />
+
           <label for="homeCity">Home City & State (India)</label>
           <input type="text" id="homeCity" name="homeCity" required />
+
           <label for="course">UCD Course & Year of Study</label>
           <input type="text" id="course" name="course" required />
+
           <label for="contact">Contact Information</label>
           <input type="text" id="contact" name="contact" required />
+
           <label for="arrivalDate">Expected Arrival Date in Ireland</label>
           <input type="date" id="arrivalDate" name="arrivalDate" required />
+
           <div class="btns">
             <button type="button" class="next-btn">Next</button>
           </div>
@@ -109,8 +117,10 @@
             <option value="OFF-CAMPUS">OFF-CAMPUS</option>
             <option value="Any">Any</option>
           </select>
+
           <label for="budget">Budget Range (€/month)</label>
           <input type="text" id="budget" name="budget" placeholder="e.g. 700-1000" required />
+
           <label for="roomType">Preferred Room Type</label>
           <select id="roomType" name="roomType" required>
             <option value="">--Select--</option>
@@ -118,12 +128,14 @@
             <option value="Shared">Shared</option>
             <option value="Studio">Studio</option>
           </select>
+
           <label for="leaseDuration">Lease Duration</label>
           <select id="leaseDuration" name="leaseDuration" required>
             <option value="">--Select--</option>
             <option value="Short-term (3-6 months)">Short-term (3-6 months)</option>
             <option value="Long-term (6-12 months)">Long-term (6-12 months)</option>
           </select>
+
           <label for="weekendPlans">Weekend Plans</label>
           <select id="weekendPlans" name="weekendPlans" required>
             <option value="">--Select--</option>
@@ -131,6 +143,7 @@
             <option value="Outing/travel">Outing / Travel</option>
             <option value="Mix">Mix of Both</option>
           </select>
+
           <label for="partTime">Part-Time Work</label>
           <select id="partTime" name="partTime" required>
             <option value="">--Select--</option>
@@ -138,6 +151,7 @@
             <option value="No">No</option>
             <option value="Maybe">Maybe</option>
           </select>
+
           <label for="transport">Preferred Mode of Transport</label>
           <select id="transport" name="transport" required>
             <option value="">--Select--</option>
@@ -145,6 +159,7 @@
             <option value="Own Vehicle">Own Vehicle</option>
             <option value="Bicycle/Walk">Bicycle / Walk</option>
           </select>
+
           <label for="guestsPolicy">Guest Policy</label>
           <select id="guestsPolicy" name="guestsPolicy" required>
             <option value="">--Select--</option>
@@ -152,6 +167,7 @@
             <option value="Occasional Visitors">Occasional Visitors</option>
             <option value="Open to Visitors">Open to Visitors</option>
           </select>
+
           <div class="btns">
             <button type="button" class="prev-btn">Previous</button>
             <button type="button" class="next-btn">Next</button>
@@ -168,6 +184,7 @@
             <option value="Moderate">Moderate</option>
             <option value="Messy">Messy</option>
           </select>
+
           <label for="sleepSchedule">Sleep Schedule</label>
           <select id="sleepSchedule" name="sleepSchedule" required>
             <option value="">--Select--</option>
@@ -175,6 +192,7 @@
             <option value="Night Owl">Night Owl</option>
             <option value="Flexible">Flexible</option>
           </select>
+
           <label for="smoking">Smoking Preference</label>
           <select id="smoking" name="smoking" required>
             <option value="">--Select--</option>
@@ -182,6 +200,7 @@
             <option value="Smoker">Smoker</option>
             <option value="No Preference">No Preference</option>
           </select>
+
           <label for="drinking">Drinking Preference</label>
           <select id="drinking" name="drinking" required>
             <option value="">--Select--</option>
@@ -189,6 +208,7 @@
             <option value="Occasionally">Occasionally</option>
             <option value="Yes">Yes</option>
           </select>
+
           <label for="diet">Dietary Preference</label>
           <select id="diet" name="diet" required>
             <option value="">--Select--</option>
@@ -197,6 +217,7 @@
             <option value="Vegan">Vegan</option>
             <option value="Eggetarian">Eggetarian</option>
           </select>
+
           <label for="cooking">Cooking Frequency</label>
           <select id="cooking" name="cooking" required>
             <option value="">--Select--</option>
@@ -204,6 +225,7 @@
             <option value="Rarely">Rarely</option>
             <option value="Eating Out">Prefers Eating Out</option>
           </select>
+
           <label for="pets">Pets Comfort</label>
           <select id="pets" name="pets" required>
             <option value="">--Select--</option>
@@ -211,6 +233,7 @@
             <option value="Not Comfortable">Not Comfortable</option>
             <option value="Bringing Own">Bringing Own Pet</option>
           </select>
+
           <div class="btns">
             <button type="button" class="prev-btn">Previous</button>
             <button type="button" class="next-btn">Next</button>
@@ -222,10 +245,13 @@
           <h2>Step 4: Interests & Confirmation</h2>
           <label for="languages">Languages Spoken</label>
           <input type="text" id="languages" name="languages" placeholder="e.g., Tamil, English" required />
+
           <label for="hobbies">Hobbies & Interests</label>
           <input type="text" id="hobbies" name="hobbies" placeholder="e.g., Cooking, Gaming, Music" required />
+
           <label for="additionalComments">Additional Comments</label>
           <textarea id="additionalComments" name="additionalComments" rows="4" placeholder="Anything else you'd like potential roommates to know?"></textarea>
+
           <p class="form-note">Click "Submit" to find your best roommate matches.</p>
           <div class="btns">
             <button type="button" class="prev-btn">Previous</button>
@@ -236,9 +262,9 @@
     </section>
 
     <!-- Top Matches Section -->
-    <section id="results-section" style="display:none;">
+    <section id="results-section" class="card" style="display:none;">
       <h2>Your Top Matches</h2>
-      <div id="results"></div>
+      <div id="results" class="matches-grid"></div>
     </section>
   </main>
 
