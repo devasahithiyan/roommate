@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>UCD Roommate Finder</title>
-
   <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css" />
 
@@ -12,7 +11,6 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
     // Replace with your actual Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAVLTCw2-...",
@@ -22,8 +20,6 @@
       messagingSenderId: "583407477445",
       appId: "1:583407477445:web:8ec652955ce67ed49806ac"
     };
-
-    // Initialize Firebase and Firestore, attach globally
     const app = initializeApp(firebaseConfig);
     window.db = getFirestore(app);
   </script>
@@ -44,31 +40,38 @@
   </div>
 
   <header>
-    <h1>UCD Roommate Finder</h1>
-    <p>Find your perfect roommate match with ease!</p>
+    <div class="header-content">
+      <h1>UCD Roommate Finder</h1>
+      <p>Discover your perfect roommate match based on shared languages, course, and more!</p>
+    </div>
   </header>
 
   <main>
     <!-- Existing User Section -->
     <section class="card existing-user-container">
-      <h2>Check Existing User</h2>
-      <p>Already filled in your details before? Search by your name!</p>
-      <label for="existingName">Enter Your Name:</label>
+      <h2>Returning User?</h2>
+      <p>If you've registered before in the google form, search by your name:</p>
+      <label for="existingName">Your Name:</label>
       <input type="text" id="existingName" placeholder="e.g., Manoharan" />
       <button id="checkUserBtn">Check</button>
       <div id="existingUserResults"></div>
     </section>
 
-    <!-- Multi-step Form -->
+    <!-- Multi-step Form Section -->
     <section class="card form-container" id="formContainer">
       <div class="step-indicator" id="stepIndicator"></div>
       <div class="progressbar">
         <div class="progress" id="formProgress"></div>
       </div>
+
       <form id="roommateForm">
-        <!-- Step 1: Basic Information -->
+        <!-- STEP 1: Basic Information -->
         <div class="form-step active">
-          <h2>Step 1: Basic Information</h2>
+          <h2>Basic Information</h2>
+
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required />
+
           <label for="fullName">Full Name</label>
           <input type="text" id="fullName" name="fullName" required />
 
@@ -77,20 +80,13 @@
             <option value="">--Select--</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
-
-          <label for="genderPref">Roommate Gender Preference</label>
-          <select id="genderPref" name="genderPref" required>
-            <option value="">--Select--</option>
-            <option value="Same">Same Gender</option>
-            <option value="NoPreference">No Preference</option>
+            <option value="Prefer not to say">Prefer not to say</option>
           </select>
 
           <label for="age">Age</label>
           <input type="number" id="age" name="age" required />
 
-          <label for="homeCity">Home City & State (India)</label>
+          <label for="homeCity">Home city and State</label>
           <input type="text" id="homeCity" name="homeCity" required />
 
           <label for="course">UCD Course & Year of Study</label>
@@ -107,19 +103,25 @@
           </div>
         </div>
 
-        <!-- Step 2: Accommodation Preferences -->
+        <!-- STEP 2: Accommodation Preferences -->
         <div class="form-step">
-          <h2>Step 2: Accommodation Preferences</h2>
+          <h2>Accommodation Preferences</h2>
+
           <label for="locationPref">Preferred Location</label>
           <select id="locationPref" name="locationPref" required>
             <option value="">--Select--</option>
             <option value="ON-CAMPUS">ON-CAMPUS</option>
             <option value="OFF-CAMPUS">OFF-CAMPUS</option>
-            <option value="Any">Any</option>
+            <option value="ANY">ANY</option>
           </select>
 
-          <label for="budget">Budget Range (€/month)</label>
-          <input type="text" id="budget" name="budget" placeholder="e.g. 700-1000" required />
+          <label for="budget">Budget Range(per month) (€)</label>
+          <select id="budget" name="budget" required>
+            <option value="">--Select--</option>
+            <option value="600-700 (Average room)">600 - 700 (Average room)</option>
+            <option value="700-800 (Above average)">700 - 800 (Above average)</option>
+            <option value="800+ (Decent good room)">800+ (Decent good room)</option>
+          </select>
 
           <label for="roomType">Preferred Room Type</label>
           <select id="roomType" name="roomType" required>
@@ -136,47 +138,16 @@
             <option value="Long-term (6-12 months)">Long-term (6-12 months)</option>
           </select>
 
-          <label for="weekendPlans">Weekend Plans</label>
-          <select id="weekendPlans" name="weekendPlans" required>
-            <option value="">--Select--</option>
-            <option value="StayingHome">Staying Home</option>
-            <option value="Outing/travel">Outing / Travel</option>
-            <option value="Mix">Mix of Both</option>
-          </select>
-
-          <label for="partTime">Part-Time Work</label>
-          <select id="partTime" name="partTime" required>
-            <option value="">--Select--</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-            <option value="Maybe">Maybe</option>
-          </select>
-
-          <label for="transport">Preferred Mode of Transport</label>
-          <select id="transport" name="transport" required>
-            <option value="">--Select--</option>
-            <option value="Public Transport">Public Transport</option>
-            <option value="Own Vehicle">Own Vehicle</option>
-            <option value="Bicycle/Walk">Bicycle / Walk</option>
-          </select>
-
-          <label for="guestsPolicy">Guest Policy</label>
-          <select id="guestsPolicy" name="guestsPolicy" required>
-            <option value="">--Select--</option>
-            <option value="No Visitors">No Visitors</option>
-            <option value="Occasional Visitors">Occasional Visitors</option>
-            <option value="Open to Visitors">Open to Visitors</option>
-          </select>
-
           <div class="btns">
             <button type="button" class="prev-btn">Previous</button>
             <button type="button" class="next-btn">Next</button>
           </div>
         </div>
 
-        <!-- Step 3: Lifestyle & Habits -->
+        <!-- STEP 3: Lifestyle & Habits -->
         <div class="form-step">
-          <h2>Step 3: Lifestyle & Habits</h2>
+          <h2>Lifestyle & Habits</h2>
+
           <label for="cleanliness">Cleanliness Level</label>
           <select id="cleanliness" name="cleanliness" required>
             <option value="">--Select--</option>
@@ -231,7 +202,7 @@
             <option value="">--Select--</option>
             <option value="Comfortable">Comfortable</option>
             <option value="Not Comfortable">Not Comfortable</option>
-            <option value="Bringing Own">Bringing Own Pet</option>
+            <option value="Bringing Own Pet">Bringing Own Pet</option>
           </select>
 
           <div class="btns">
@@ -240,19 +211,79 @@
           </div>
         </div>
 
-        <!-- Step 4: Interests & Confirmation -->
+        <!-- STEP 4: Interests & Common Preferences -->
         <div class="form-step">
-          <h2>Step 4: Interests & Confirmation</h2>
+          <h2>Interests & Common Preferences</h2>
+
           <label for="languages">Languages Spoken</label>
-          <input type="text" id="languages" name="languages" placeholder="e.g., Tamil, English" required />
+          <input type="text" id="languages" name="languages" placeholder="e.g. Tamil, English, Hindi" required />
 
           <label for="hobbies">Hobbies & Interests</label>
-          <input type="text" id="hobbies" name="hobbies" placeholder="e.g., Cooking, Gaming, Music" required />
+          <input type="text" id="hobbies" name="hobbies" placeholder="e.g. Cooking, Gaming, Fitness" required />
 
-          <label for="additionalComments">Additional Comments</label>
-          <textarea id="additionalComments" name="additionalComments" rows="4" placeholder="Anything else you'd like potential roommates to know?"></textarea>
+          <label for="transportPref">Preferred Mode of Transport</label>
+          <select id="transportPref" name="transportPref" required>
+            <option value="">--Select--</option>
+            <option value="Walking">Walking</option>
+            <option value="Public Transport">Public Transport</option>
+            <option value="Own Vehicle">Own Vehicle</option>
+          </select>
 
-          <p class="form-note">Click "Submit" to find your best roommate matches.</p>
+          <label for="partTimeWork">Part time work</label>
+          <select id="partTimeWork" name="partTimeWork" required>
+            <option value="">--Select--</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+
+          <label for="weekendPlans">Weekend plans</label>
+          <select id="weekendPlans" name="weekendPlans" required>
+            <option value="">--Select--</option>
+            <option value="Outing/travel">Outing/travel</option>
+            <option value="StayingHome">Prefer no outing</option>
+            <option value="Mix">Mix</option>
+          </select>
+
+          <label for="guestsPolicy">Guests Policy</label>
+          <select id="guestsPolicy" name="guestsPolicy" required>
+            <option value="">--Select--</option>
+            <option value="Okay with visitor">Okay with visitor</option>
+            <option value="Prefer no guest">Prefer no guest</option>
+          </select>
+
+          <label for="specialRequirements">Any Special Requirements</label>
+          <input type="text" id="specialRequirements" name="specialRequirements" placeholder="e.g. no loud music" />
+
+          <div class="btns">
+            <button type="button" class="prev-btn">Previous</button>
+            <button type="button" class="next-btn">Next</button>
+          </div>
+        </div>
+
+        <!-- STEP 5: Verification & Contact -->
+        <div class="form-step">
+          <h2>Verification & Contact</h2>
+
+          <label for="socialMedia">Social Media Handle</label>
+          <input type="text" id="socialMedia" name="socialMedia" placeholder="@instagramHandle" />
+
+          <label for="studentID">UCD Student ID Number</label>
+          <input type="text" id="studentID" name="studentID" placeholder="12345678" />
+
+          <div class="btns">
+            <button type="button" class="prev-btn">Previous</button>
+            <button type="button" class="next-btn">Next</button>
+          </div>
+        </div>
+
+        <!-- STEP 6: Additional Comments -->
+        <div class="form-step">
+          <h2>Additional Comments</h2>
+
+          <label for="additionalComments">Anything Else You'd Like to Share?</label>
+          <textarea id="additionalComments" name="additionalComments" rows="4"></textarea>
+
+          <p class="form-note">Click "Submit" to see your best roommate matches.</p>
           <div class="btns">
             <button type="button" class="prev-btn">Previous</button>
             <button type="submit" class="submit-btn">Submit</button>
@@ -272,7 +303,7 @@
     <p>&copy; 2025 UCD Roommate Finder | All rights reserved.</p>
   </footer>
 
-  <!-- Main script -->
+  <!-- Your script with KNN logic -->
   <script type="module" src="script.js"></script>
 </body>
 </html>

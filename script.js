@@ -12,12 +12,11 @@ const stepIndicator = document.getElementById("stepIndicator");
 
 let currentStep = 0;
 function updateFormStep(step) {
-  formSteps.forEach((stepEl, index) => {
-    stepEl.classList.toggle("active", index === step);
+  formSteps.forEach((el, index) => {
+    el.classList.toggle("active", index === step);
   });
   const totalSteps = formSteps.length;
-  const progressPercent = (step / (totalSteps - 1)) * 100;
-  formProgress.style.width = progressPercent + "%";
+  formProgress.style.width = ((step / (totalSteps - 1)) * 100) + "%";
   stepIndicator.textContent = `Step ${step + 1} of ${totalSteps}`;
 }
 nextBtns.forEach(btn => {
@@ -50,26 +49,20 @@ darkModeToggle.addEventListener("change", () => {
   3. Loading Overlay Helpers
 **************************************************************/
 const loadingOverlay = document.getElementById("loadingOverlay");
-function showLoading() {
-  loadingOverlay.style.display = "flex";
-}
-function hideLoading() {
-  loadingOverlay.style.display = "none";
-}
+function showLoading() { loadingOverlay.style.display = "flex"; }
+function hideLoading() { loadingOverlay.style.display = "none"; }
 
 /**************************************************************
-  4. Load & Store Users
+  4. Data Loading (Firebase & data.json)
 **************************************************************/
 let staticUsers = [];
 let firebaseUsers = [];
 
-// Load static data from data.json
 fetch("data.json")
   .then(res => res.json())
   .then(data => { staticUsers = data; })
-  .catch(err => console.error("Error loading JSON data:", err));
+  .catch(err => console.error("Error loading data.json:", err));
 
-// Fetch from Firestore
 async function fetchFirebaseUsers() {
   showLoading();
   try {
@@ -78,8 +71,8 @@ async function fetchFirebaseUsers() {
     snapshot.forEach(doc => {
       firebaseUsers.push(doc.data());
     });
-  } catch (error) {
-    console.error("Error fetching Firebase users:", error);
+  } catch (err) {
+    console.error("Error fetching Firebase users:", err);
   } finally {
     hideLoading();
   }
@@ -87,18 +80,31 @@ async function fetchFirebaseUsers() {
 fetchFirebaseUsers();
 
 /**************************************************************
-  5. Utility & Matching
+  5. Matching Algorithm with KNN & Enhanced Priorities
 **************************************************************/
+/*
+  Define maximum possible raw score as:
+    - Base weighted categories: 58 points
+    - Regional language bonus: up to 2 overlaps @ +20 each = 40 points
+    - Hobby bonus: up to 4 overlaps @ +2 each = 8 points
+    - Course bonus: if courses match, add +20 points (high priority)
+  
+  Total MAX_POSSIBLE_SCORE = 58 + 40 + 8 + 20 = 126
+*/
+const MAX_POSSIBLE_SCORE = 126;
+const K = 5; // Top 5 matches
+
 function parseBudget(budgetStr) {
   if (!budgetStr) return null;
   const nums = budgetStr.match(/\d+/g);
-  if (!nums || nums.length < 2) return null;
-  return { min: parseInt(nums[0], 10), max: parseInt(nums[1], 10) };
+  return nums && nums.length >= 2 ? { min: parseInt(nums[0], 10), max: parseInt(nums[1], 10) } : null;
 }
+
 function budgetsOverlap(b1, b2) {
   if (!b1 || !b2) return true;
   return !(b1.max < b2.min || b2.max < b1.min);
 }
+
 function transformUser(u) {
   return {
     fullName: u.Name || u.fullName || "",
@@ -130,68 +136,76 @@ function transformUser(u) {
   };
 }
 
-function calculateMatchScore(userObj, candidateObj) {
+function calculateRawScore(userObj, candidateObj) {
   const user = transformUser(userObj);
-  const candidate = transformUser(candidateObj);
+  const cand = transformUser(candidateObj);
 
   // Hard filters
-  if (user.genderPref === "Same" && user.gender !== candidate.gender) return 0;
-  const userBudget = parseBudget(user.budget);
-  const candBudget = parseBudget(candidate.budget);
-  if (!budgetsOverlap(userBudget, candBudget)) return 0;
-  if (user.leaseDuration && candidate.leaseDuration &&
-      user.leaseDuration !== candidate.leaseDuration) return 0;
-  if (user.locationPref !== "Any" && user.locationPref !== candidate.locationPref) return 0;
+  if (user.genderPref === "Same" && user.gender !== cand.gender) return 0;
+  const userB = parseBudget(user.budget);
+  const candB = parseBudget(cand.budget);
+  if (!budgetsOverlap(userB, candB)) return 0;
+  if (user.leaseDuration && cand.leaseDuration && user.leaseDuration !== cand.leaseDuration) return 0;
+  if (user.locationPref !== "Any" && user.locationPref !== cand.locationPref) return 0;
 
-  // Weighted scoring
   let score = 0;
-  if (user.cleanliness === candidate.cleanliness) score += 10;
-  if (user.sleepSchedule === candidate.sleepSchedule) score += 8;
-  if (user.smoking === candidate.smoking) score += 5;
-  if (user.drinking === candidate.drinking) score += 5;
-  if (user.diet === candidate.diet) score += 7;
-  if (user.cooking === candidate.cooking) score += 5;
-  if (user.pets === candidate.pets) score += 5;
+  // Base weighted scoring (total = 58)
+  if (user.cleanliness === cand.cleanliness) score += 10;
+  if (user.sleepSchedule === cand.sleepSchedule) score += 8;
+  if (user.smoking === cand.smoking) score += 5;
+  if (user.drinking === cand.drinking) score += 5;
+  if (user.diet === cand.diet) score += 7;
+  if (user.cooking === cand.cooking) score += 5;
+  if (user.pets === cand.pets) score += 5;
+  if (user.weekendPlans && cand.weekendPlans &&
+      user.weekendPlans.toLowerCase() === cand.weekendPlans.toLowerCase()) score += 5;
+  if (user.partTime && cand.partTime &&
+      user.partTime.toLowerCase() === cand.partTime.toLowerCase()) score += 3;
+  if (user.transport && cand.transport &&
+      user.transport.toLowerCase() === cand.transport.toLowerCase()) score += 3;
+  if (user.guestsPolicy && cand.guestsPolicy &&
+      user.guestsPolicy.toLowerCase() === cand.guestsPolicy.toLowerCase()) score += 2;
 
-  if (user.weekendPlans && candidate.weekendPlans &&
-      user.weekendPlans.toLowerCase() === candidate.weekendPlans.toLowerCase()) {
-    score += 5;
-  }
-  if (user.partTime && candidate.partTime &&
-      user.partTime.toLowerCase() === candidate.partTime.toLowerCase()) {
-    score += 3;
-  }
-  if (user.transport && candidate.transport &&
-      user.transport.toLowerCase() === candidate.transport.toLowerCase()) {
-    score += 3;
-  }
-  if (user.guestsPolicy && candidate.guestsPolicy &&
-      user.guestsPolicy.toLowerCase() === candidate.guestsPolicy.toLowerCase()) {
-    score += 2;
-  }
-
-  // Language weighting
+  // Regional Language Bonus (non-English)
   const userLangs = user.languages.toLowerCase().split(",").map(x => x.trim());
-  const candLangs = candidate.languages.toLowerCase().split(",").map(x => x.trim());
-  const userNonEng = userLangs.filter(l => l !== "english" && l);
-  const candNonEng = candLangs.filter(l => l !== "english" && l);
-  const commonNonEng = userNonEng.filter(lang => candNonEng.includes(lang));
-  // If they share one or more non-English languages, big bonus
-  if (commonNonEng.length > 0) {
-    score += commonNonEng.length * 12;
-  }
-  // If they don't share non-English, but both have "english"
-  if (commonNonEng.length === 0 && userLangs.includes("english") && candLangs.includes("english")) {
-    score += 5;
+  const candLangs = cand.languages.toLowerCase().split(",").map(x => x.trim());
+  const userRegional = userLangs.filter(l => l !== "english" && l);
+  const candRegional = candLangs.filter(l => l !== "english" && l);
+  let regionalOverlap = 0;
+  userRegional.forEach(lang => { if (candRegional.includes(lang)) regionalOverlap++; });
+  if (regionalOverlap > 2) regionalOverlap = 2;
+  // Each shared regional language gets a high bonus of +20
+  score += regionalOverlap * 20;
+  // If no regional overlap, but both list english, add a small bonus
+  if (regionalOverlap === 0 && userLangs.includes("english") && candLangs.includes("english")) {
+    score += 3;
   }
 
-  // Hobbies overlap
+  // Course Bonus: if courses match (ignoring case), add +20 points (very high priority)
+  if (user.course.trim().toLowerCase() === cand.course.trim().toLowerCase()) {
+    score += 20;
+  }
+
+  // Hobbies Bonus (cap at 4 overlaps, +2 each)
   const userHobbies = user.hobbies.toLowerCase().split(",").map(x => x.trim());
-  const candHobbies = candidate.hobbies.toLowerCase().split(",").map(x => x.trim());
-  const commonHobbies = userHobbies.filter(h => candHobbies.includes(h));
-  score += commonHobbies.length * 3;
+  const candHobbies = cand.hobbies.toLowerCase().split(",").map(x => x.trim());
+  let hobbyOverlap = 0;
+  userHobbies.forEach(h => { if (candHobbies.includes(h)) hobbyOverlap++; });
+  if (hobbyOverlap > 4) hobbyOverlap = 4;
+  score += hobbyOverlap * 2;
 
   return score;
+}
+
+/**
+ * K-Nearest Neighbors: Return top K matches sorted by raw score.
+ */
+function findKNearestMatches(userObj, candidates, k) {
+  const scored = candidates
+    .map(candidate => ({ candidate, score: calculateRawScore(userObj, candidate) }))
+    .filter(m => m.score > 0)
+    .sort((a, b) => b.score - a.score);
+  return scored.slice(0, k);
 }
 
 /**************************************************************
@@ -201,7 +215,6 @@ const resultsSection = document.getElementById("results-section");
 const resultsDiv = document.getElementById("results");
 
 function displayTopMatches(scoredMatches) {
-  // Clear old
   resultsDiv.innerHTML = "";
   resultsSection.style.display = "block";
 
@@ -210,19 +223,13 @@ function displayTopMatches(scoredMatches) {
     return;
   }
 
-  // Highest score -> 100%
-  const maxScore = Math.max(...scoredMatches.map(m => m.score));
-  const mapped = scoredMatches
-    .map(m => {
-      const pct = maxScore ? ((m.score / maxScore) * 100).toFixed(0) : 0;
-      return { candidate: m.candidate, percentage: parseInt(pct, 10) };
-    })
-    .sort((a, b) => b.percentage - a.percentage);
+  // Map raw score to percentage relative to MAX_POSSIBLE_SCORE
+  const matchesWithPercentage = scoredMatches.map(m => {
+    const pct = ((m.score / MAX_POSSIBLE_SCORE) * 100).toFixed(0);
+    return { candidate: m.candidate, percentage: parseInt(pct, 10) };
+  }).sort((a, b) => b.percentage - a.percentage);
 
-  // take top 5
-  const topFive = mapped.slice(0, 5);
-
-  topFive.forEach(match => {
+  matchesWithPercentage.forEach(match => {
     const c = match.candidate;
     const name = c.Name || c.fullName || "Unknown";
     const course = c["UCD Course & Year of Study"] || c.course || "N/A";
@@ -245,24 +252,16 @@ function displayTopMatches(scoredMatches) {
     resultsDiv.appendChild(matchDiv);
   });
 
-  // Finally, scroll to the card section
+  // Auto-scroll to the results section
   resultsSection.scrollIntoView({ behavior: "smooth" });
 }
 
 /**************************************************************
-  7. "Check Existing User"
+  7. Check Existing User Feature
 **************************************************************/
 const checkUserBtn = document.getElementById("checkUserBtn");
 const existingNameInput = document.getElementById("existingName");
 const existingUserResults = document.getElementById("existingUserResults");
-const formContainer = document.getElementById("formContainer");
-
-function findUserByName(name, arr) {
-  return arr.find(u => {
-    const fullName = (u.Name || u.fullName || "").toLowerCase();
-    return fullName.includes(name);
-  });
-}
 
 checkUserBtn.addEventListener("click", async () => {
   const searchName = existingNameInput.value.trim().toLowerCase();
@@ -275,26 +274,19 @@ checkUserBtn.addEventListener("click", async () => {
   await fetchFirebaseUsers();
   hideLoading();
 
-  const foundStatic = findUserByName(searchName, staticUsers);
-  const foundFirebase = findUserByName(searchName, firebaseUsers);
+  const foundStatic = staticUsers.find(u => (u.Name || u.fullName || "").toLowerCase().includes(searchName));
+  const foundFirebase = firebaseUsers.find(u => (u.Name || u.fullName || "").toLowerCase().includes(searchName));
   const foundUser = foundStatic || foundFirebase;
 
   if (!foundUser) {
     existingUserResults.innerHTML = `<p style="color:red">User not found. Please register below!</p>`;
-    formContainer.scrollIntoView({ behavior: "smooth" });
   } else {
-    existingUserResults.innerHTML = `<p style="color:green">User found! Showing matches...</p>`;
-    const userObj = transformUser(foundUser);
-
-    // Filter out foundUser from the match pool
-    const allUsers = [...staticUsers, ...firebaseUsers].filter(u =>
+    existingUserResults.innerHTML = `<p style="color:green">User found! Calculating matches...</p>`;
+    const allCandidates = [...staticUsers, ...firebaseUsers].filter(u =>
       (u.Name || u.fullName) !== (foundUser.Name || foundUser.fullName)
     );
-    const scored = allUsers
-      .map(candidate => ({ candidate, score: calculateMatchScore(userObj, candidate) }))
-      .filter(m => m.score > 0);
-
-    displayTopMatches(scored);
+    const nearest = findKNearestMatches(foundUser, allCandidates, K);
+    displayTopMatches(nearest);
   }
 });
 
@@ -343,16 +335,9 @@ form.addEventListener("submit", async (e) => {
     hideLoading();
   }
 
-  // Exclude newUser from match pool
-  const allUsersExceptSelf = [...staticUsers, ...firebaseUsers].filter(u =>
+  const allCandidates = [...staticUsers, ...firebaseUsers].filter(u =>
     (u.Name || u.fullName) !== newUser.fullName
   );
-  const scoredMatches = allUsersExceptSelf
-    .map(candidate => ({
-      candidate,
-      score: calculateMatchScore(newUser, candidate)
-    }))
-    .filter(m => m.score > 0);
-
-  displayTopMatches(scoredMatches);
+  const nearest = findKNearestMatches(newUser, allCandidates, K);
+  displayTopMatches(nearest);
 });
