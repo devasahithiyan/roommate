@@ -43,10 +43,7 @@ body {
 .slider {
   position: absolute;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background-color: #ddd;
   transition: 0.4s;
   border-radius: 20px;
@@ -54,10 +51,8 @@ body {
 .slider:before {
   position: absolute;
   content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
+  height: 14px; width: 14px;
+  left: 3px; bottom: 3px;
   background-color: white;
   transition: 0.4s;
   border-radius: 50%;
@@ -78,10 +73,8 @@ input:checked + .slider:before {
 ---------------------------------------------------- */
 .loading-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   background: rgba(0,0,0,0.5);
   z-index: 9999;
   display: none;
@@ -92,8 +85,7 @@ input:checked + .slider:before {
   border: 8px solid #f3f3f3;
   border-top: 8px solid #0080ff;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 50px; height: 50px;
   animation: spin 1s linear infinite;
 }
 @keyframes spin {
@@ -185,6 +177,7 @@ main {
 .form-container form input[type="text"],
 .form-container form input[type="number"],
 .form-container form input[type="date"],
+.form-container form input[type="email"],
 .form-container form select,
 .form-container form textarea {
   width: 100%;
@@ -197,6 +190,16 @@ main {
 }
 .form-container form textarea {
   resize: vertical;
+}
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+.note {
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  color: #666;
 }
 .btns {
   display: flex;
@@ -281,6 +284,19 @@ main {
   box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
 
+/* Table for all users display */
+#allUsersDisplay table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+#allUsersDisplay th, 
+#allUsersDisplay td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: left;
+}
+
 /* ----------------------------------------------------
    9. Footer
 ---------------------------------------------------- */
@@ -332,6 +348,13 @@ footer {
 .dark-mode footer {
   background: #2a2a2a;
   color: #bbb;
+}
+.dark-mode #allUsersDisplay table,
+.dark-mode #allUsersDisplay th,
+.dark-mode #allUsersDisplay td {
+  background: #2a2a2a;
+  color: #f0f0f0;
+  border-color: #666;
 }
 
 /* ----------------------------------------------------

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>UCD Roommate Finder</title>
+
   <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css" />
 
@@ -11,6 +12,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    
     // Replace with your actual Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAVLTCw2-...",
@@ -21,6 +23,7 @@
       appId: "1:583407477445:web:8ec652955ce67ed49806ac"
     };
     const app = initializeApp(firebaseConfig);
+    // Make Firestore available globally
     window.db = getFirestore(app);
   </script>
 </head>
@@ -50,7 +53,7 @@
     <!-- Existing User Section -->
     <section class="card existing-user-container">
       <h2>Returning User?</h2>
-      <p>If you've registered before in the google form, search by your name:</p>
+      <p>If you've registered before, search by your name:</p>
       <label for="existingName">Your Name:</label>
       <input type="text" id="existingName" placeholder="e.g., Manoharan" />
       <button id="checkUserBtn">Check</button>
@@ -69,13 +72,13 @@
         <div class="form-step active">
           <h2>Basic Information</h2>
 
-          <label for="email">Email</label>
+          <label for="email">Email *</label>
           <input type="email" id="email" name="email" required />
 
-          <label for="fullName">Full Name</label>
+          <label for="fullName">Full Name *</label>
           <input type="text" id="fullName" name="fullName" required />
 
-          <label for="gender">Gender</label>
+          <label for="gender">Gender *</label>
           <select id="gender" name="gender" required>
             <option value="">--Select--</option>
             <option value="Male">Male</option>
@@ -83,19 +86,26 @@
             <option value="Prefer not to say">Prefer not to say</option>
           </select>
 
-          <label for="age">Age</label>
+          <label for="genderPref">Roommate Gender Preference *</label>
+          <select id="genderPref" name="genderPref" required>
+            <option value="NoPreference">No Preference</option>
+            <option value="Same">Same</option>
+            <option value="Opposite">Opposite</option>
+          </select>
+
+          <label for="age">Age *</label>
           <input type="number" id="age" name="age" required />
 
-          <label for="homeCity">Home city and State</label>
+          <label for="homeCity">Home city and State *</label>
           <input type="text" id="homeCity" name="homeCity" required />
 
-          <label for="course">UCD Course & Year of Study</label>
+          <label for="course">UCD Course & Year of Study *</label>
           <input type="text" id="course" name="course" required />
 
-          <label for="contact">Contact Information</label>
+          <label for="contact">Contact Information *</label>
           <input type="text" id="contact" name="contact" required />
 
-          <label for="arrivalDate">Expected Arrival Date in Ireland</label>
+          <label for="arrivalDate">Expected Arrival Date in Ireland *</label>
           <input type="date" id="arrivalDate" name="arrivalDate" required />
 
           <div class="btns">
@@ -107,7 +117,7 @@
         <div class="form-step">
           <h2>Accommodation Preferences</h2>
 
-          <label for="locationPref">Preferred Location</label>
+          <label for="locationPref">Preferred Location *</label>
           <select id="locationPref" name="locationPref" required>
             <option value="">--Select--</option>
             <option value="ON-CAMPUS">ON-CAMPUS</option>
@@ -115,7 +125,7 @@
             <option value="ANY">ANY</option>
           </select>
 
-          <label for="budget">Budget Range(per month) (€)</label>
+          <label for="budget">Budget Range(per month) (€) *</label>
           <select id="budget" name="budget" required>
             <option value="">--Select--</option>
             <option value="600-700 (Average room)">600 - 700 (Average room)</option>
@@ -123,7 +133,7 @@
             <option value="800+ (Decent good room)">800+ (Decent good room)</option>
           </select>
 
-          <label for="roomType">Preferred Room Type</label>
+          <label for="roomType">Preferred Room Type *</label>
           <select id="roomType" name="roomType" required>
             <option value="">--Select--</option>
             <option value="Single">Single</option>
@@ -131,7 +141,7 @@
             <option value="Studio">Studio</option>
           </select>
 
-          <label for="leaseDuration">Lease Duration</label>
+          <label for="leaseDuration">Lease Duration *</label>
           <select id="leaseDuration" name="leaseDuration" required>
             <option value="">--Select--</option>
             <option value="Short-term (3-6 months)">Short-term (3-6 months)</option>
@@ -148,7 +158,7 @@
         <div class="form-step">
           <h2>Lifestyle & Habits</h2>
 
-          <label for="cleanliness">Cleanliness Level</label>
+          <label for="cleanliness">Cleanliness Level *</label>
           <select id="cleanliness" name="cleanliness" required>
             <option value="">--Select--</option>
             <option value="Neat">Neat</option>
@@ -156,7 +166,7 @@
             <option value="Messy">Messy</option>
           </select>
 
-          <label for="sleepSchedule">Sleep Schedule</label>
+          <label for="sleepSchedule">Sleep Schedule *</label>
           <select id="sleepSchedule" name="sleepSchedule" required>
             <option value="">--Select--</option>
             <option value="Early Riser">Early Riser</option>
@@ -164,7 +174,7 @@
             <option value="Flexible">Flexible</option>
           </select>
 
-          <label for="smoking">Smoking Preference</label>
+          <label for="smoking">Smoking Preference *</label>
           <select id="smoking" name="smoking" required>
             <option value="">--Select--</option>
             <option value="Non-Smoker">Non-Smoker</option>
@@ -172,7 +182,7 @@
             <option value="No Preference">No Preference</option>
           </select>
 
-          <label for="drinking">Drinking Preference</label>
+          <label for="drinking">Drinking Preference *</label>
           <select id="drinking" name="drinking" required>
             <option value="">--Select--</option>
             <option value="No">No</option>
@@ -180,7 +190,7 @@
             <option value="Yes">Yes</option>
           </select>
 
-          <label for="diet">Dietary Preference</label>
+          <label for="diet">Dietary Preference *</label>
           <select id="diet" name="diet" required>
             <option value="">--Select--</option>
             <option value="Vegetarian">Vegetarian</option>
@@ -189,7 +199,7 @@
             <option value="Eggetarian">Eggetarian</option>
           </select>
 
-          <label for="cooking">Cooking Frequency</label>
+          <label for="cooking">Cooking Frequency *</label>
           <select id="cooking" name="cooking" required>
             <option value="">--Select--</option>
             <option value="Often">Often</option>
@@ -197,7 +207,7 @@
             <option value="Eating Out">Prefers Eating Out</option>
           </select>
 
-          <label for="pets">Pets Comfort</label>
+          <label for="pets">Pets Comfort *</label>
           <select id="pets" name="pets" required>
             <option value="">--Select--</option>
             <option value="Comfortable">Comfortable</option>
@@ -215,13 +225,29 @@
         <div class="form-step">
           <h2>Interests & Common Preferences</h2>
 
-          <label for="languages">Languages Spoken</label>
-          <input type="text" id="languages" name="languages" placeholder="e.g. Tamil, English, Hindi" required />
+          <p><strong>Languages Spoken <span style="color: red">*</span></strong></p>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="languages" value="Tamil" /> Tamil</label>
+            <label><input type="checkbox" name="languages" value="English" /> English</label>
+            <label><input type="checkbox" name="languages" value="Malayalam" /> Malayalam</label>
+            <label><input type="checkbox" name="languages" value="Kannada" /> Kannada</label>
+            <label><input type="checkbox" name="languages" value="Hindi" /> Hindi</label>
+          </div>
+          <p class="note">Please select at least one language.</p>
 
-          <label for="hobbies">Hobbies & Interests</label>
-          <input type="text" id="hobbies" name="hobbies" placeholder="e.g. Cooking, Gaming, Fitness" required />
+          <p><strong>Hobbies & Interests <span style="color: red">*</span></strong></p>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="hobbies" value="Cooking" /> Cooking</label>
+            <label><input type="checkbox" name="hobbies" value="Gaming" /> Gaming</label>
+            <label><input type="checkbox" name="hobbies" value="Fitness" /> Fitness</label>
+            <label><input type="checkbox" name="hobbies" value="Music" /> Music</label>
+            <label><input type="checkbox" name="hobbies" value="Movies" /> Movies</label>
+            <label><input type="checkbox" name="hobbies" value="Travel" /> Travel</label>
+            <label><input type="checkbox" name="hobbies" value="Reading" /> Reading</label>
+          </div>
+          <p class="note">Please select at least one hobby.</p>
 
-          <label for="transportPref">Preferred Mode of Transport</label>
+          <label for="transportPref">Preferred Mode of Transport *</label>
           <select id="transportPref" name="transportPref" required>
             <option value="">--Select--</option>
             <option value="Walking">Walking</option>
@@ -229,14 +255,14 @@
             <option value="Own Vehicle">Own Vehicle</option>
           </select>
 
-          <label for="partTimeWork">Part time work</label>
+          <label for="partTimeWork">Part time work *</label>
           <select id="partTimeWork" name="partTimeWork" required>
             <option value="">--Select--</option>
             <option value="Yes">Yes</option>
             <option value="No">No</option>
           </select>
 
-          <label for="weekendPlans">Weekend plans</label>
+          <label for="weekendPlans">Weekend plans *</label>
           <select id="weekendPlans" name="weekendPlans" required>
             <option value="">--Select--</option>
             <option value="Outing/travel">Outing/travel</option>
@@ -244,13 +270,14 @@
             <option value="Mix">Mix</option>
           </select>
 
-          <label for="guestsPolicy">Guests Policy</label>
+          <label for="guestsPolicy">Guests Policy *</label>
           <select id="guestsPolicy" name="guestsPolicy" required>
             <option value="">--Select--</option>
             <option value="Okay with visitor">Okay with visitor</option>
             <option value="Prefer no guest">Prefer no guest</option>
           </select>
 
+          <!-- Non-required field -->
           <label for="specialRequirements">Any Special Requirements</label>
           <input type="text" id="specialRequirements" name="specialRequirements" placeholder="e.g. no loud music" />
 
@@ -264,9 +291,11 @@
         <div class="form-step">
           <h2>Verification & Contact</h2>
 
+          <!-- Non-required field -->
           <label for="socialMedia">Social Media Handle</label>
           <input type="text" id="socialMedia" name="socialMedia" placeholder="@instagramHandle" />
 
+          <!-- Non-required field -->
           <label for="studentID">UCD Student ID Number</label>
           <input type="text" id="studentID" name="studentID" placeholder="12345678" />
 
@@ -279,7 +308,7 @@
         <!-- STEP 6: Additional Comments -->
         <div class="form-step">
           <h2>Additional Comments</h2>
-
+          <!-- Non-required field -->
           <label for="additionalComments">Anything Else You'd Like to Share?</label>
           <textarea id="additionalComments" name="additionalComments" rows="4"></textarea>
 
@@ -297,13 +326,20 @@
       <h2>Your Top Matches</h2>
       <div id="results" class="matches-grid"></div>
     </section>
+
+    <!-- View All Users Section -->
+    <section class="card">
+      <h2>View All Registered Users</h2>
+      <button id="viewAllBtn">View All Users</button>
+      <div id="allUsersDisplay"></div>
+    </section>
   </main>
 
   <footer>
     <p>&copy; 2025 UCD Roommate Finder | All rights reserved.</p>
   </footer>
 
-  <!-- Your script with KNN logic -->
+  <!-- Main script with KNN logic -->
   <script type="module" src="script.js"></script>
 </body>
 </html>
