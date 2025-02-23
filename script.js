@@ -78,12 +78,10 @@ async function fetchFirebaseUsers() {
 fetchFirebaseUsers();
 
 /**************************************************************
-  5. Matching Algorithm
-   We must transform the Firestore doc fields to uniform keys
-   so the matching logic can see them properly.
+  5. Matching Algorithm & Weighted Score
 **************************************************************/
 const MAX_POSSIBLE_SCORE = 126;
-const K = 5; // top matches
+const K = 5; // top K matches
 
 function parseBudget(budgetStr) {
   if (!budgetStr) return null;
@@ -93,28 +91,17 @@ function parseBudget(budgetStr) {
 }
 
 function budgetsOverlap(b1, b2) {
-  if (!b1 || !b2) return true;
+  if (!b1 || !b2) return true; // if missing, skip strict check
   return !(b1.max < b2.min || b2.max < b1.min);
 }
 
-/**
- * transformUser ensures all the keys used by matching are present.
- * Here we EXACTLY match the Firestore doc field names you showed:
- *
- *  Name
- *  Age
- *  Gender
- *  Budget Range(per month) (€)
- *  UCD Course & Year of Study
- *  Contact Information
- *  ...
- */
 function transformUser(u) {
+  // EXACT keys from Firestore docs
   return {
     name: u["Name"] || "",
     age: u["Age"] || "",
     gender: u["Gender"] || "",
-    genderPref: u["Roommate Gender Preference"] || "NoPreference",  // or your actual doc field
+    genderPref: u["Roommate Gender Preference"] || "NoPreference",
     homeCity: u["Home city and State"] || "",
     course: u["UCD Course & Year of Study"] || "",
     contact: u["Contact Information"] || "",
@@ -139,9 +126,6 @@ function transformUser(u) {
   };
 }
 
-/**
- * Weighted raw score. 0 if any "hard filter" fails.
- */
 function calculateRawScore(userObj, candidateObj) {
   const user = transformUser(userObj);
   const cand = transformUser(candidateObj);
@@ -157,7 +141,7 @@ function calculateRawScore(userObj, candidateObj) {
   if (user.locationPref !== "ANY" && user.locationPref !== cand.locationPref) return 0;
 
   let score = 0;
-  // Base weighting
+  // Weighted scoring (58 base)
   if (user.cleanliness === cand.cleanliness) score += 10;
   if (user.sleepSchedule === cand.sleepSchedule) score += 8;
   if (user.smoking === cand.smoking) score += 5;
@@ -176,15 +160,12 @@ function calculateRawScore(userObj, candidateObj) {
   const candLangs = cand.languages.toLowerCase().split(",").map(x => x.trim());
   const userRegional = userLangs.filter(l => l !== "english" && l);
   const candRegional = candLangs.filter(l => l !== "english" && l);
-
   let regionalOverlap = 0;
   userRegional.forEach(lang => {
     if (candRegional.includes(lang)) regionalOverlap++;
   });
   if (regionalOverlap > 2) regionalOverlap = 2;
   score += regionalOverlap * 20;
-
-  // If no regional overlap, but both speak english
   if (regionalOverlap === 0 && userLangs.includes("english") && candLangs.includes("english")) {
     score += 3;
   }
@@ -207,16 +188,27 @@ function calculateRawScore(userObj, candidateObj) {
   return score;
 }
 
-/** Return top K matches, scored descending, ignoring zero. */
+/**
+ * Deduplicate by "Name", then compute raw scores, filter zero,
+ * sort descending, slice top K
+ */
 function findKNearestMatches(userObj, candidates, k) {
-  const scored = candidates.map(candidate => ({
+  // deduplicate by "Name" ignoring case
+  const uniqueMap = new Map();
+  for (const c of candidates) {
+    const cName = (c["Name"] || "").toLowerCase().trim();
+    if (!uniqueMap.has(cName)) {
+      uniqueMap.set(cName, c);
+    }
+  }
+  const uniqueCandidates = Array.from(uniqueMap.values());
+
+  const scored = uniqueCandidates.map(candidate => ({
     candidate,
     score: calculateRawScore(userObj, candidate)
-  }))
-  .filter(m => m.score > 0)
-  .sort((a, b) => b.score - a.score);
-
-  return scored.slice(0, k);
+  }));
+  const filtered = scored.filter(m => m.score > 0).sort((a, b) => b.score - a.score);
+  return filtered.slice(0, k);
 }
 
 /**************************************************************
@@ -234,14 +226,12 @@ function displayTopMatches(scoredMatches) {
     return;
   }
 
-  // Convert raw score to a percentage
   const matchesWithPercentage = scoredMatches.map(m => {
     const pct = ((m.score / MAX_POSSIBLE_SCORE) * 100).toFixed(0);
     return { candidate: m.candidate, percentage: parseInt(pct, 10) };
   }).sort((a, b) => b.percentage - a.percentage);
 
   matchesWithPercentage.forEach(match => {
-    // Use the Firestore fields to display user info
     const c = match.candidate;
     const name = c["Name"] || "Unknown";
     const course = c["UCD Course & Year of Study"] || "N/A";
@@ -268,12 +258,14 @@ function displayTopMatches(scoredMatches) {
 }
 
 /**************************************************************
-  7. Check Existing User
+  7. Check Existing User (Exact match or partial)
 **************************************************************/
 const checkUserBtn = document.getElementById("checkUserBtn");
 const existingNameInput = document.getElementById("existingName");
 const existingUserResults = document.getElementById("existingUserResults");
 
+// If you want partial matches, use .includes(searchName)
+// If you want exact matches, use docName === searchName
 checkUserBtn.addEventListener("click", async () => {
   const searchName = existingNameInput.value.trim().toLowerCase();
   if (!searchName) {
@@ -282,38 +274,39 @@ checkUserBtn.addEventListener("click", async () => {
   }
 
   showLoading();
-  await fetchFirebaseUsers(); // get the latest from Firestore
+  await fetchFirebaseUsers();
   hideLoading();
 
-  // find user by "Name" in firebaseUsers
-  const foundUser = firebaseUsers.find(u => {
-    const storedName = (u["Name"] || "").toLowerCase();
-    return storedName.includes(searchName);
-  });
+  // EXACT match approach:
+  const foundUser = firebaseUsers.find(u =>
+    (u["Name"] || "").toLowerCase().trim() === searchName
+  );
+
+  // If you'd rather do partial:
+  // const foundUser = firebaseUsers.find(u =>
+  //   (u["Name"] || "").toLowerCase().includes(searchName)
+  // );
 
   if (!foundUser) {
     existingUserResults.innerHTML = `<p style="color:red">User not found. Please register below!</p>`;
   } else {
     existingUserResults.innerHTML = `<p style="color:green">User found! Calculating matches...</p>`;
-    // Exclude them from candidates
-    const candidates = firebaseUsers.filter(u => {
+    const allCandidates = firebaseUsers.filter(u => {
       const cName = (u["Name"] || "").toLowerCase().trim();
       const fName = (foundUser["Name"] || "").toLowerCase().trim();
-      return cName !== fName;
+      return cName !== fName; // exclude found user
     });
-    const nearest = findKNearestMatches(foundUser, candidates, K);
+    const nearest = findKNearestMatches(foundUser, allCandidates, K);
     displayTopMatches(nearest);
   }
 });
 
 /**************************************************************
   8. New User Registration & Matching
-     Store EXACT Firestore field keys matching the screenshot
 **************************************************************/
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // Make sure at least one language, hobby is selected
   const selectedLangs = Array.from(document.querySelectorAll('input[name="languages"]:checked'))
     .map(cb => cb.value);
   if (selectedLangs.length === 0) {
@@ -327,7 +320,7 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Build new doc with fields EXACTLY like your screenshot
+  // EXACT Firestore keys
   const newUserDoc = {
     "Name": document.getElementById("fullName").value,
     "Age": document.getElementById("age").value,
@@ -354,39 +347,39 @@ form.addEventListener("submit", async (e) => {
     "Guests Policy": document.getElementById("guestsPolicy").value,
     "Languages Spoken": selectedLangs.join(", "),
     "Hobbies & Interests": selectedHobbies.join(", "),
-    "Any Special Requirements": document.getElementById("specialRequirements").value, // not required
-    "Social Media Handle": document.getElementById("socialMedia").value, // not required
-    "UCD Student ID Number": document.getElementById("studentID").value, // not required
-    "Anything Else You'd Like to Share?": document.getElementById("additionalComments").value // optional
+    "Any Special Requirements": document.getElementById("specialRequirements").value,
+    "Social Media Handle": document.getElementById("socialMedia").value,
+    "UCD Student ID Number": document.getElementById("studentID").value,
+    "Anything Else You'd Like to Share?": document.getElementById("additionalComments").value
   };
 
   showLoading();
   try {
     await addDoc(collection(window.db, "users"), newUserDoc);
-    await fetchFirebaseUsers();  // refresh local firebaseUsers
+    await fetchFirebaseUsers(); // refresh local array
   } catch (err) {
     console.error("Error adding user:", err);
   } finally {
     hideLoading();
   }
 
-  // Now find top matches for the newly added user
-  // 1) transform new user doc the same way to see if we can find a match
-  const newUserName = newUserDoc["Name"].toLowerCase().trim();
+  // Exclude newly added user from the candidate list
+  const newName = (newUserDoc["Name"] || "").toLowerCase().trim();
   const allCandidates = firebaseUsers.filter(u => {
-    const docName = (u["Name"] || "").toLowerCase().trim();
-    return docName !== newUserName;
+    const cName = (u["Name"] || "").toLowerCase().trim();
+    return cName !== newName;
   });
+
+  // Show matches
   const nearest = findKNearestMatches(newUserDoc, allCandidates, K);
   displayTopMatches(nearest);
 
-  // Optionally refresh "All Users" table
+  // Optionally refresh the 'All Users' table
   renderAllUsers();
 });
 
 /**************************************************************
   9. View All Users
-     Show columns: Name, Course, Budget, Contact
 **************************************************************/
 const viewAllBtn = document.getElementById("viewAllBtn");
 const allUsersDisplay = document.getElementById("allUsersDisplay");
@@ -405,17 +398,11 @@ function renderAllUsers() {
   }
   let html = `<table>
     <thead>
-      <tr>
-        <th>Name</th>
-        <th>Course</th>
-        <th>Budget</th>
-        <th>Contact</th>
-      </tr>
+      <tr><th>Name</th><th>Course</th><th>Budget</th><th>Contact</th></tr>
     </thead>
     <tbody>`;
 
   firebaseUsers.forEach(u => {
-    // Pull fields from Firestore exactly as stored
     const name = u["Name"] || "";
     const course = u["UCD Course & Year of Study"] || "";
     const budget = u["Budget Range(per month) (€)"] || "";
