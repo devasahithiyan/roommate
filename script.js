@@ -1,8 +1,24 @@
-import { collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+/****************************************************
+  1. Firebase Initialization (Replace config!)
+*****************************************************/
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-/**************************************************************
-  1. Multi-step Form Logic
-**************************************************************/
+// TODO: Replace with your actual Firebase config:
+const firebaseConfig = {
+  apiKey: "AIzaSyAVLTCw2-...",
+  authDomain: "roommate-a8e89.firebaseapp.com",
+  projectId: "roommate-a8e89",
+  storageBucket: "roommate-a8e89.firebasestorage.app",
+  messagingSenderId: "583407477445",
+  appId: "1:583407477445:web:8ec652955ce67ed49806ac"
+};
+const app = initializeApp(firebaseConfig);
+window.db = getFirestore(app);
+
+/****************************************************
+  2. Form Steps & Progress + Validation
+*****************************************************/
 const form = document.getElementById("roommateForm");
 const formSteps = Array.from(document.querySelectorAll(".form-step"));
 const nextBtns = Array.from(document.querySelectorAll(".next-btn"));
@@ -11,22 +27,47 @@ const formProgress = document.getElementById("formProgress");
 const stepIndicator = document.getElementById("stepIndicator");
 
 let currentStep = 0;
+
+/** Check if all required fields in the current step are filled. */
+function validateCurrentStep(stepIndex) {
+  const stepEl = formSteps[stepIndex];
+  const requiredFields = stepEl.querySelectorAll("[required]");
+  let valid = true;
+
+  requiredFields.forEach(field => {
+    if (!field.value.trim()) {
+      valid = false;
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+    }
+  });
+
+  if (!valid) {
+    alert("Please fill out all required fields in this step before proceeding.");
+  }
+  return valid;
+}
+
 function updateFormStep(step) {
-  formSteps.forEach((el, index) => {
-    el.classList.toggle("active", index === step);
+  formSteps.forEach((el, idx) => {
+    el.classList.toggle("active", idx === step);
   });
   const totalSteps = formSteps.length;
   formProgress.style.width = ((step / (totalSteps - 1)) * 100) + "%";
   stepIndicator.textContent = `Step ${step + 1} of ${totalSteps}`;
 }
+
 nextBtns.forEach(btn => {
   btn.addEventListener("click", () => {
+    if (!validateCurrentStep(currentStep)) return;
     if (currentStep < formSteps.length - 1) {
       currentStep++;
       updateFormStep(currentStep);
     }
   });
 });
+
 prevBtns.forEach(btn => {
   btn.addEventListener("click", () => {
     if (currentStep > 0) {
@@ -35,51 +76,54 @@ prevBtns.forEach(btn => {
     }
   });
 });
+
 updateFormStep(currentStep);
 
-/**************************************************************
-  2. Dark Mode Toggle
-**************************************************************/
+/****************************************************
+  3. Dark Mode Toggle
+*****************************************************/
 const darkModeToggle = document.getElementById("darkModeToggle");
 darkModeToggle.addEventListener("change", () => {
   document.body.classList.toggle("dark-mode");
 });
 
-/**************************************************************
-  3. Loading Overlay Helpers
-**************************************************************/
+/****************************************************
+  4. Loading Overlay
+*****************************************************/
 const loadingOverlay = document.getElementById("loadingOverlay");
-function showLoading() { loadingOverlay.style.display = "flex"; }
-function hideLoading() { loadingOverlay.style.display = "none"; }
+function showLoading() {
+  loadingOverlay.style.display = "flex";
+}
+function hideLoading() {
+  loadingOverlay.style.display = "none";
+}
 
-/**************************************************************
-  4. Firestore Data
-**************************************************************/
+/****************************************************
+  5. Fetching Users from Firestore
+*****************************************************/
 let firebaseUsers = [];
-
-/** Fetch all users from Firebase into the global firebaseUsers array. */
 async function fetchFirebaseUsers() {
   showLoading();
   try {
-    const snapshot = await getDocs(collection(window.db, "users"));
     firebaseUsers = [];
-    snapshot.forEach(doc => {
-      firebaseUsers.push(doc.data());
+    const snapshot = await getDocs(collection(window.db, "users"));
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      // Store the docId for deletion
+      data.docId = docSnap.id;
+      firebaseUsers.push(data);
     });
-    console.log("Fetched from Firebase:", firebaseUsers);
   } catch (err) {
     console.error("Error fetching Firebase users:", err);
   } finally {
     hideLoading();
   }
 }
-
-// On page load, immediately fetch any existing users
 fetchFirebaseUsers();
 
-/**************************************************************
-  5. Matching Algorithm & Weighted Score
-**************************************************************/
+/****************************************************
+  6. Matching Algorithm
+*****************************************************/
 const MAX_POSSIBLE_SCORE = 126;
 const K = 5; // top K matches
 
@@ -91,12 +135,11 @@ function parseBudget(budgetStr) {
 }
 
 function budgetsOverlap(b1, b2) {
-  if (!b1 || !b2) return true; // if missing, skip strict check
+  if (!b1 || !b2) return true; 
   return !(b1.max < b2.min || b2.max < b1.min);
 }
 
 function transformUser(u) {
-  // EXACT keys from Firestore docs
   return {
     name: u["Name"] || "",
     age: u["Age"] || "",
@@ -122,7 +165,8 @@ function transformUser(u) {
     cooking: u["Cooking Frequency"] || "",
     pets: u["Pets Comfort"] || "",
     languages: u["Languages Spoken"] || "",
-    hobbies: u["Hobbies & Interests"] || ""
+    hobbies: u["Hobbies & Interests"] || "",
+    docId: u["docId"] || ""
   };
 }
 
@@ -141,7 +185,7 @@ function calculateRawScore(userObj, candidateObj) {
   if (user.locationPref !== "ANY" && user.locationPref !== cand.locationPref) return 0;
 
   let score = 0;
-  // Weighted scoring (58 base)
+  // Weighted scoring
   if (user.cleanliness === cand.cleanliness) score += 10;
   if (user.sleepSchedule === cand.sleepSchedule) score += 8;
   if (user.smoking === cand.smoking) score += 5;
@@ -149,7 +193,6 @@ function calculateRawScore(userObj, candidateObj) {
   if (user.diet === cand.diet) score += 7;
   if (user.cooking === cand.cooking) score += 5;
   if (user.pets === cand.pets) score += 5;
-
   if (user.weekendPlans.toLowerCase() === cand.weekendPlans.toLowerCase()) score += 5;
   if (user.partTime.toLowerCase() === cand.partTime.toLowerCase()) score += 3;
   if (user.transport.toLowerCase() === cand.transport.toLowerCase()) score += 3;
@@ -188,12 +231,7 @@ function calculateRawScore(userObj, candidateObj) {
   return score;
 }
 
-/**
- * Deduplicate by "Name", then compute raw scores, filter zero,
- * sort descending, slice top K
- */
 function findKNearestMatches(userObj, candidates, k) {
-  // deduplicate by "Name" ignoring case
   const uniqueMap = new Map();
   for (const c of candidates) {
     const cName = (c["Name"] || "").toLowerCase().trim();
@@ -211,9 +249,35 @@ function findKNearestMatches(userObj, candidates, k) {
   return filtered.slice(0, k);
 }
 
-/**************************************************************
-  6. Display Matches
-**************************************************************/
+/****************************************************
+  7. Modal Handling (for full user data)
+*****************************************************/
+const modalOverlay = document.getElementById("userModal");
+const modalCloseBtn = document.getElementById("closeModal");
+const modalBody = document.getElementById("userModalBody");
+
+function openUserModal(userObj) {
+  const rows = [];
+  for (const key of Object.keys(userObj)) {
+    if (!userObj[key] || key === "docId") continue;
+    rows.push(`
+      <div class="row">
+        <div class="label">${key}:</div>
+        <div class="value">${userObj[key]}</div>
+      </div>
+    `);
+  }
+  modalBody.innerHTML = rows.join("") || "<p>No additional details found.</p>";
+  modalOverlay.style.display = "flex";
+}
+
+modalCloseBtn.addEventListener("click", () => {
+  modalOverlay.style.display = "none";
+});
+
+/****************************************************
+  8. Display Matches (cards clickable => modal)
+*****************************************************/
 const resultsSection = document.getElementById("results-section");
 const resultsDiv = document.getElementById("results");
 
@@ -251,41 +315,37 @@ function displayTopMatches(scoredMatches) {
       <p><strong>Hobbies:</strong> ${hobbies}</p>
       <p><strong>Contact:</strong> ${contact}</p>
     `;
+
+    matchDiv.addEventListener("click", () => {
+      openUserModal(c);
+    });
+
     resultsDiv.appendChild(matchDiv);
   });
 
   resultsSection.scrollIntoView({ behavior: "smooth" });
 }
 
-/**************************************************************
-  7. Check Existing User (Exact match or partial)
-**************************************************************/
+/****************************************************
+  9. Check Existing User
+*****************************************************/
 const checkUserBtn = document.getElementById("checkUserBtn");
 const existingNameInput = document.getElementById("existingName");
 const existingUserResults = document.getElementById("existingUserResults");
 
-// If you want partial matches, use .includes(searchName)
-// If you want exact matches, use docName === searchName
 checkUserBtn.addEventListener("click", async () => {
   const searchName = existingNameInput.value.trim().toLowerCase();
   if (!searchName) {
     existingUserResults.innerHTML = "<p style='color:red'>Please enter a name.</p>";
     return;
   }
-
   showLoading();
   await fetchFirebaseUsers();
   hideLoading();
 
-  // EXACT match approach:
   const foundUser = firebaseUsers.find(u =>
     (u["Name"] || "").toLowerCase().trim() === searchName
   );
-
-  // If you'd rather do partial:
-  // const foundUser = firebaseUsers.find(u =>
-  //   (u["Name"] || "").toLowerCase().includes(searchName)
-  // );
 
   if (!foundUser) {
     existingUserResults.innerHTML = `<p style="color:red">User not found. Please register below!</p>`;
@@ -294,18 +354,19 @@ checkUserBtn.addEventListener("click", async () => {
     const allCandidates = firebaseUsers.filter(u => {
       const cName = (u["Name"] || "").toLowerCase().trim();
       const fName = (foundUser["Name"] || "").toLowerCase().trim();
-      return cName !== fName; // exclude found user
+      return cName !== fName;
     });
     const nearest = findKNearestMatches(foundUser, allCandidates, K);
     displayTopMatches(nearest);
   }
 });
 
-/**************************************************************
-  8. New User Registration & Matching
-**************************************************************/
+/****************************************************
+ 10. New User Registration & Matching
+*****************************************************/
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (!validateCurrentStep(currentStep)) return;
 
   const selectedLangs = Array.from(document.querySelectorAll('input[name="languages"]:checked'))
     .map(cb => cb.value);
@@ -320,7 +381,6 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  // EXACT Firestore keys
   const newUserDoc = {
     "Name": document.getElementById("fullName").value,
     "Age": document.getElementById("age").value,
@@ -356,66 +416,167 @@ form.addEventListener("submit", async (e) => {
   showLoading();
   try {
     await addDoc(collection(window.db, "users"), newUserDoc);
-    await fetchFirebaseUsers(); // refresh local array
+    await fetchFirebaseUsers();
   } catch (err) {
     console.error("Error adding user:", err);
   } finally {
     hideLoading();
   }
 
-  // Exclude newly added user from the candidate list
   const newName = (newUserDoc["Name"] || "").toLowerCase().trim();
   const allCandidates = firebaseUsers.filter(u => {
     const cName = (u["Name"] || "").toLowerCase().trim();
     return cName !== newName;
   });
-
-  // Show matches
   const nearest = findKNearestMatches(newUserDoc, allCandidates, K);
   displayTopMatches(nearest);
-
-  // Optionally refresh the 'All Users' table
   renderAllUsers();
 });
 
-/**************************************************************
-  9. View All Users
-**************************************************************/
+/****************************************************
+ 11. View All Users => Card Layout + Delete
+*****************************************************/
 const viewAllBtn = document.getElementById("viewAllBtn");
-const allUsersDisplay = document.getElementById("allUsersDisplay");
+const allUsersGrid = document.getElementById("allUsersGrid");
 
 viewAllBtn.addEventListener("click", async () => {
   showLoading();
-  await fetchFirebaseUsers(); // get fresh data
+  await fetchFirebaseUsers();
   hideLoading();
   renderAllUsers();
 });
 
 function renderAllUsers() {
   if (firebaseUsers.length === 0) {
-    allUsersDisplay.innerHTML = "<p>No users found!</p>";
+    allUsersGrid.innerHTML = "<p>No users found!</p>";
     return;
   }
-  let html = `<table>
-    <thead>
-      <tr><th>Name</th><th>Course</th><th>Budget</th><th>Contact</th></tr>
-    </thead>
-    <tbody>`;
 
-  firebaseUsers.forEach(u => {
-    const name = u["Name"] || "";
-    const course = u["UCD Course & Year of Study"] || "";
-    const budget = u["Budget Range(per month) (€)"] || "";
-    const contact = u["Contact Information"] || "";
-
-    html += `<tr>
-      <td>${name}</td>
-      <td>${course}</td>
-      <td>${budget}</td>
-      <td>${contact}</td>
-    </tr>`;
+  // Sort users by name (ascending order)
+  firebaseUsers.sort((a, b) => {
+    const nameA = (a["Name"] || "").toLowerCase();
+    const nameB = (b["Name"] || "").toLowerCase();
+    return nameA.localeCompare(nameB);
   });
 
-  html += "</tbody></table>";
-  allUsersDisplay.innerHTML = html;
+  allUsersGrid.innerHTML = "";
+  firebaseUsers.forEach((userDoc) => {
+    const name = userDoc["Name"] || "Unnamed";
+    const course = userDoc["UCD Course & Year of Study"] || "N/A";
+    const budget = userDoc["Budget Range(per month) (€)"] || "N/A";
+    const contact = userDoc["Contact Information"] || "N/A";
+    const docId = userDoc["docId"];
+
+    const card = document.createElement("div");
+    card.classList.add("user-card");
+    card.innerHTML = `
+      <button class="delete-btn" data-docid="${docId}">Delete</button>
+      <h3>${name}</h3>
+      <small><strong>Course:</strong> ${course}</small>
+      <small><strong>Budget:</strong> ${budget}</small>
+      <small><strong>Contact:</strong> ${contact}</small>
+    `;
+
+    card.addEventListener("click", () => {
+      openUserModal(userDoc);
+    });
+
+    const deleteBtn = card.querySelector(".delete-btn");
+    deleteBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (confirm("Are you sure you want to delete this user?")) {
+        try {
+          showLoading();
+          const docRef = doc(window.db, "users", docId);
+          await deleteDoc(docRef);
+          await fetchFirebaseUsers();
+          renderAllUsers();
+        } catch (err) {
+          console.error("Error deleting doc:", err);
+        } finally {
+          hideLoading();
+        }
+      }
+    });
+
+    allUsersGrid.appendChild(card);
+  });
 }
+
+/****************************************************
+ 12. Random Fill Button
+*****************************************************/
+const randomFillBtn = document.getElementById("randomFillBtn");
+randomFillBtn.addEventListener("click", () => {
+  const names = ["Alice Johnson","Bob Singh","Carol Tan","David Lee","Evelyn Roy","Frank Murphy","Georgia Paul","Vishal Singh J"];
+  const cities = ["Chennai, TN","Bangalore, KA","Cochin, KL","Mumbai, MH","Dublin, IE","Galway, IE"];
+  const courses = ["MSc CS 1st Year","MBA 2nd Year","MEng 1st Year","MA 1st Year","Marketing 2025"];
+  const contactSamples = ["+91 9999999999", "email@example.com", "Telegram @xyz","+971551072879"];
+  const randomName = names[Math.floor(Math.random() * names.length)];
+  const randomCity = cities[Math.floor(Math.random() * cities.length)];
+  const randomCourse = courses[Math.floor(Math.random() * courses.length)];
+  const randomContact = contactSamples[Math.floor(Math.random() * contactSamples.length)];
+  const randomAge = Math.floor(Math.random() * 10) + 20;
+  const randomGender = ["Male","Female","Prefer not to say"][Math.floor(Math.random()*3)];
+  const randomPref = ["NoPreference","Same","Opposite"][Math.floor(Math.random()*3)];
+
+  document.getElementById("email").value = `test${Math.floor(Math.random()*1000)}@example.com`;
+  document.getElementById("fullName").value = randomName;
+  document.getElementById("gender").value = randomGender;
+  document.getElementById("genderPref").value = randomPref;
+  document.getElementById("age").value = randomAge;
+  document.getElementById("homeCity").value = randomCity;
+  document.getElementById("course").value = randomCourse;
+  document.getElementById("contact").value = randomContact;
+  document.getElementById("arrivalDate").value = "2025-09-01";
+
+  const locOptions = ["ANY","ON-CAMPUS","OFF-CAMPUS"];
+  const randomLoc = locOptions[Math.floor(Math.random()*locOptions.length)];
+  document.getElementById("locationPref").value = randomLoc;
+
+  const budOptions = [
+    "600-700 (Average room)",
+    "700-800 (Above average)",
+    "800+ (Decent good room)"
+  ];
+  const randomBud = budOptions[Math.floor(Math.random()*budOptions.length)];
+  document.getElementById("budget").value = randomBud;
+
+  const roomTypeOptions = ["Single","Shared","Studio"];
+  document.getElementById("roomType").value = roomTypeOptions[Math.floor(Math.random()*roomTypeOptions.length)];
+
+  const leaseOptions = ["Short-term (3-6 months)","Long-term (6-12 months)"];
+  document.getElementById("leaseDuration").value = leaseOptions[Math.floor(Math.random()*leaseOptions.length)];
+
+  document.getElementById("cleanliness").value = ["Neat","Moderate","Messy"][Math.floor(Math.random()*3)];
+  document.getElementById("sleepSchedule").value = ["Early Riser","Night Owl","Flexible"][Math.floor(Math.random()*3)];
+  document.getElementById("smoking").value = ["Non-Smoker","Smoker","No Preference"][Math.floor(Math.random()*3)];
+  document.getElementById("drinking").value = ["No","Occasionally","Yes"][Math.floor(Math.random()*3)];
+  document.getElementById("diet").value = ["Vegetarian","Non-Vegetarian","Vegan","Eggetarian"][Math.floor(Math.random()*4)];
+  document.getElementById("cooking").value = ["Often","Rarely","Eating Out"][Math.floor(Math.random()*3)];
+  document.getElementById("pets").value = ["Comfortable","Not Comfortable","Bringing Own Pet"][Math.floor(Math.random()*3)];
+
+  document.querySelectorAll('input[name="languages"]').forEach(cb => cb.checked = false);
+  document.querySelectorAll('input[name="hobbies"]').forEach(cb => cb.checked = false);
+
+  const langCheckboxes = Array.from(document.querySelectorAll('input[name="languages"]'));
+  for (let i=0; i<1+Math.floor(Math.random()*3); i++){
+    const randomCB = langCheckboxes[Math.floor(Math.random()*langCheckboxes.length)];
+    randomCB.checked = true;
+  }
+  const hobCheckboxes = Array.from(document.querySelectorAll('input[name="hobbies"]'));
+  for (let i=0; i<2+Math.floor(Math.random()*3); i++){
+    const randomCB = hobCheckboxes[Math.floor(Math.random()*hobCheckboxes.length)];
+    randomCB.checked = true;
+  }
+
+  document.getElementById("transportPref").value = ["Walking","Public Transport","Own Vehicle"][Math.floor(Math.random()*3)];
+  document.getElementById("partTimeWork").value = ["Yes","No"][Math.floor(Math.random()*2)];
+  document.getElementById("weekendPlans").value = ["Outing/travel","StayingHome","Mix"][Math.floor(Math.random()*3)];
+  document.getElementById("guestsPolicy").value = ["Okay with visitor","Prefer no guest"][Math.floor(Math.random()*2)];
+  document.getElementById("specialRequirements").value = "";
+  document.getElementById("socialMedia").value = "@testAccount";
+  document.getElementById("studentID").value = String(Math.floor(Math.random()*10000000));
+  document.getElementById("additionalComments").value = "Randomly filled data for testing!";
+  alert("Form fields randomly filled!");
+});

@@ -5,33 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>UCD Roommate Finder</title>
 
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
   <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Firebase App (the core Firebase SDK) and Firestore -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-    
-    // Replace with your actual Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAVLTCw2-...",
-      authDomain: "roommate-a8e89.firebaseapp.com",
-      projectId: "roommate-a8e89",
-      storageBucket: "roommate-a8e89.firebasestorage.app",
-      messagingSenderId: "583407477445",
-      appId: "1:583407477445:web:8ec652955ce67ed49806ac"
-    };
-    const app = initializeApp(firebaseConfig);
-    // Make Firestore available globally
-    window.db = getFirestore(app);
-  </script>
 </head>
+
 <body>
   <!-- Dark Mode Toggle -->
   <div class="theme-toggle">
     <label class="switch">
-      <input type="checkbox" id="darkModeToggle">
+      <input type="checkbox" id="darkModeToggle" />
       <span class="slider round"></span>
     </label>
     <span class="toggle-text">Dark Mode</span>
@@ -42,6 +27,7 @@
     <div class="spinner"></div>
   </div>
 
+  <!-- Sticky Header -->
   <header>
     <div class="header-content">
       <h1>UCD Roommate Finder</h1>
@@ -50,14 +36,17 @@
   </header>
 
   <main>
-    <!-- Existing User Section -->
+    <!-- Returning User Section -->
     <section class="card existing-user-container">
-      <h2>Returning User?</h2>
-      <p>If you've registered before, search by your name:</p>
-      <label for="existingName">Your Name:</label>
-      <input type="text" id="existingName" placeholder="e.g., Manoharan" />
-      <button id="checkUserBtn">Check</button>
-      <div id="existingUserResults"></div>
+      <div>
+        <h2>Returning User?</h2>
+        <p style="margin-bottom:0.5rem;">If you've registered before in the Google forms, search by your name:</p>
+      </div>
+      <div class="existing-user-controls">
+        <input type="text" id="existingName" placeholder="e.g., Manoharan" />
+        <button id="checkUserBtn">Check</button>
+      </div>
+      <div id="existingUserResults" class="existing-user-results"></div>
     </section>
 
     <!-- Multi-step Form Section -->
@@ -109,6 +98,7 @@
           <input type="date" id="arrivalDate" name="arrivalDate" required />
 
           <div class="btns">
+            <button type="button" class="fill-btn" id="randomFillBtn">Fill Random Data</button>
             <button type="button" class="next-btn">Next</button>
           </div>
         </div>
@@ -277,7 +267,6 @@
             <option value="Prefer no guest">Prefer no guest</option>
           </select>
 
-          <!-- Non-required field -->
           <label for="specialRequirements">Any Special Requirements</label>
           <input type="text" id="specialRequirements" name="specialRequirements" placeholder="e.g. no loud music" />
 
@@ -291,11 +280,9 @@
         <div class="form-step">
           <h2>Verification & Contact</h2>
 
-          <!-- Non-required field -->
           <label for="socialMedia">Social Media Handle</label>
           <input type="text" id="socialMedia" name="socialMedia" placeholder="@instagramHandle" />
 
-          <!-- Non-required field -->
           <label for="studentID">UCD Student ID Number</label>
           <input type="text" id="studentID" name="studentID" placeholder="12345678" />
 
@@ -308,7 +295,6 @@
         <!-- STEP 6: Additional Comments -->
         <div class="form-step">
           <h2>Additional Comments</h2>
-          <!-- Non-required field -->
           <label for="additionalComments">Anything Else You'd Like to Share?</label>
           <textarea id="additionalComments" name="additionalComments" rows="4"></textarea>
 
@@ -322,7 +308,7 @@
     </section>
 
     <!-- Top Matches Section -->
-    <section id="results-section" class="card" style="display:none;">
+    <section id="results-section" class="card">
       <h2>Your Top Matches</h2>
       <div id="results" class="matches-grid"></div>
     </section>
@@ -331,7 +317,7 @@
     <section class="card">
       <h2>View All Registered Users</h2>
       <button id="viewAllBtn">View All Users</button>
-      <div id="allUsersDisplay"></div>
+      <div id="allUsersGrid" class="all-users-grid"></div>
     </section>
   </main>
 
@@ -339,7 +325,16 @@
     <p>&copy; 2025 UCD Roommate Finder | All rights reserved.</p>
   </footer>
 
-  <!-- Main script with KNN logic -->
+  <!-- Modal for Full User Data -->
+  <div id="userModal" class="modal-overlay">
+    <div class="modal-content">
+      <span id="closeModal" class="close-btn">&times;</span>
+      <h2>User Details</h2>
+      <div id="userModalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Main script (ES Module) -->
   <script type="module" src="script.js"></script>
 </body>
 </html>

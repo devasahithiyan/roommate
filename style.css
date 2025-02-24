@@ -1,9 +1,9 @@
 /* ----------------------------------------------------
-   1. Basic Reset & Typography
+   RESET & GLOBALS
 ---------------------------------------------------- */
 * {
   box-sizing: border-box;
-  margin: 0;
+  margin: 0; 
   padding: 0;
 }
 html, body {
@@ -11,15 +11,22 @@ html, body {
 }
 body {
   font-family: 'Roboto', sans-serif;
-  background: #f9f9f9;
+  background: #fafafa;
   color: #333;
-  line-height: 1.6;
   display: flex;
   flex-direction: column;
 }
+a {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+ul, li {
+  list-style: none;
+}
 
 /* ----------------------------------------------------
-   2. Dark Mode Toggle
+   DARK MODE TOGGLE
 ---------------------------------------------------- */
 .theme-toggle {
   position: fixed;
@@ -32,29 +39,31 @@ body {
 .switch {
   position: relative;
   display: inline-block;
-  width: 40px;
+  width: 40px; 
   height: 20px;
 }
 .switch input {
-  opacity: 0;
-  width: 0;
+  opacity: 0; 
+  width: 0; 
   height: 0;
 }
 .slider {
-  position: absolute;
-  cursor: pointer;
+  position: absolute; 
+  cursor: pointer; 
   top: 0; left: 0; right: 0; bottom: 0;
   background-color: #ddd;
   transition: 0.4s;
   border-radius: 20px;
 }
 .slider:before {
-  position: absolute;
+  position: absolute; 
   content: "";
-  height: 14px; width: 14px;
-  left: 3px; bottom: 3px;
+  height: 14px; 
+  width: 14px;
+  left: 3px; 
+  bottom: 3px;
   background-color: white;
-  transition: 0.4s;
+  transition: 0.4s; 
   border-radius: 50%;
 }
 input:checked + .slider {
@@ -64,17 +73,18 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 .toggle-text {
-  margin-left: 0.5rem;
+  margin-left: 0.5rem; 
   font-size: 0.9rem;
 }
 
 /* ----------------------------------------------------
-   3. Loading Overlay & Spinner
+   LOADING OVERLAY
 ---------------------------------------------------- */
 .loading-overlay {
   position: fixed;
   top: 0; left: 0;
-  width: 100%; height: 100%;
+  width: 100%; 
+  height: 100%;
   background: rgba(0,0,0,0.5);
   z-index: 9999;
   display: none;
@@ -85,7 +95,8 @@ input:checked + .slider:before {
   border: 8px solid #f3f3f3;
   border-top: 8px solid #0080ff;
   border-radius: 50%;
-  width: 50px; height: 50px;
+  width: 50px; 
+  height: 50px;
   animation: spin 1s linear infinite;
 }
 @keyframes spin {
@@ -93,7 +104,7 @@ input:checked + .slider:before {
 }
 
 /* ----------------------------------------------------
-   4. Header
+   STICKY HEADER
 ---------------------------------------------------- */
 header {
   background: linear-gradient(135deg, #0050c8, #0080ff);
@@ -101,6 +112,13 @@ header {
   color: #fff;
   padding: 2rem 1rem;
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+.header-content {
+  max-width: 1000px;
+  margin: 0 auto;
 }
 .header-content h1 {
   font-size: 2.5rem;
@@ -111,19 +129,15 @@ header {
 }
 
 /* ----------------------------------------------------
-   5. Main Container
+   MAIN CONTAINER & CARD
 ---------------------------------------------------- */
 main {
   flex: 1;
   width: 90%;
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 2rem auto;
   padding: 1rem;
 }
-
-/* ----------------------------------------------------
-   6. Card Layout
----------------------------------------------------- */
 .card {
   background: #fff;
   border-radius: 12px;
@@ -142,9 +156,52 @@ main {
 }
 
 /* ----------------------------------------------------
-   7. Form Styling
+   EXISTING USER SECTION
 ---------------------------------------------------- */
-.form-container .step-indicator {
+.existing-user-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.existing-user-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.existing-user-controls input[type="text"] {
+  padding: 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+.existing-user-controls button {
+  background: #0080ff;
+  color: #fff;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.existing-user-controls button:hover {
+  background: #0066cc;
+}
+.existing-user-results {
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+/* ----------------------------------------------------
+   MULTI-STEP FORM
+---------------------------------------------------- */
+.form-container {
+  position: relative;
+}
+.step-indicator {
   text-align: center;
   font-weight: bold;
   margin-bottom: 1rem;
@@ -169,17 +226,17 @@ main {
 .form-step.active {
   display: block;
 }
-.form-container form label {
+form label {
   display: block;
   margin-bottom: 0.3rem;
   font-weight: 500;
 }
-.form-container form input[type="text"],
-.form-container form input[type="number"],
-.form-container form input[type="date"],
-.form-container form input[type="email"],
-.form-container form select,
-.form-container form textarea {
+form input[type="text"],
+form input[type="number"],
+form input[type="date"],
+form input[type="email"],
+form select,
+form textarea {
   width: 100%;
   padding: 0.7rem;
   border-radius: 6px;
@@ -188,13 +245,20 @@ main {
   margin-bottom: 0.75rem;
   background: #fff;
 }
-.form-container form textarea {
+form textarea {
   resize: vertical;
 }
 .checkbox-group {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 1rem;
   margin-bottom: 1rem;
+}
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: normal;
 }
 .note {
   font-size: 0.85rem;
@@ -207,21 +271,17 @@ main {
   gap: 1rem;
   margin-top: 1rem;
 }
-.next-btn,
-.prev-btn,
-.submit-btn {
+.btns button {
   background: #0080ff;
   color: #fff;
   border: none;
-  padding: 0.75rem 2rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.3s;
 }
-.next-btn:hover,
-.prev-btn:hover,
-.submit-btn:hover {
+.btns button:hover {
   background: #0066cc;
 }
 .prev-btn {
@@ -231,14 +291,25 @@ main {
 .prev-btn:hover {
   background: #999;
 }
+.fill-btn {
+  background: #f57c00 !important;
+}
+.fill-btn:hover {
+  background: #ef6c00 !important;
+}
 .form-note {
   margin-top: 1rem;
   font-size: 0.9rem;
   color: #666;
 }
 
+/* Highlight invalid fields */
+.invalid {
+  border-color: #f00 !important;
+}
+
 /* ----------------------------------------------------
-   8. Matches Section (Grid Layout)
+   MATCHES SECTION
 ---------------------------------------------------- */
 #results-section {
   display: none;
@@ -257,15 +328,21 @@ main {
   animation: fadeIn 0.5s ease forwards;
   opacity: 0;
   transform: translateY(10px);
+  cursor: pointer;
 }
 @keyframes fadeIn {
   to { opacity: 1; transform: translateY(0); }
 }
+.match:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
 .match h3 {
   font-size: 1.2rem;
   margin-bottom: 0.5rem;
+  color: #0080ff;
 }
-.match-progress {
+.match .match-progress {
   height: 10px;
   width: 100%;
   background: #e5e5e5;
@@ -273,32 +350,119 @@ main {
   border-radius: 5px;
   overflow: hidden;
 }
-.match-progress-bar {
+.match .match-progress-bar {
   height: 100%;
   background: #0080ff;
   width: 0%;
   transition: width 0.4s;
 }
-.match:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
-}
 
-/* Table for all users display */
-#allUsersDisplay table {
-  width: 100%;
-  border-collapse: collapse;
+/* ----------------------------------------------------
+   VIEW ALL USERS (Grid Card Layout)
+---------------------------------------------------- */
+.all-users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
   margin-top: 1rem;
 }
-#allUsersDisplay th, 
-#allUsersDisplay td {
-  border: 1px solid #ccc;
-  padding: 0.5rem;
-  text-align: left;
+.user-card {
+  background: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  padding: 1rem;
+  transition: box-shadow 0.3s, transform 0.3s;
+  cursor: pointer;
+  position: relative;
+}
+.user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.user-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
+  color: #0080ff;
+}
+.user-card small {
+  display: block;
+  margin-bottom: 0.6rem;
+  color: #666;
+}
+.user-card button.delete-btn {
+  position: absolute;
+  top: 10px; 
+  right: 10px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.user-card button.delete-btn:hover {
+  background: #c0392b;
 }
 
 /* ----------------------------------------------------
-   9. Footer
+   MODAL POPUP for Full User Details
+   (2-column layout for details)
+---------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  top: 0; 
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none; /* hidden by default */
+  background-color: rgba(0,0,0,0.6);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  width: 90%;
+  max-width: 600px;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 10px;
+  position: relative;
+  overflow-y: auto;
+  max-height: 80vh;
+}
+.close-btn {
+  position: absolute;
+  top: 1rem; 
+  right: 1rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #333;
+}
+.close-btn:hover {
+  color: #666;
+}
+.modal-body {
+  margin-top: 1rem;
+}
+.modal-body .row {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+.modal-body .row .label {
+  font-weight: bold;
+  width: 40%;
+  margin-right: 0.5rem;
+  word-wrap: break-word;
+}
+.modal-body .row .value {
+  width: 60%;
+  word-wrap: break-word;
+}
+
+/* ----------------------------------------------------
+   FOOTER
 ---------------------------------------------------- */
 footer {
   text-align: center;
@@ -310,7 +474,7 @@ footer {
 }
 
 /* ----------------------------------------------------
-   10. Dark Mode Overrides
+   DARK MODE OVERRIDES
 ---------------------------------------------------- */
 .dark-mode {
   background: #1e1e1e;
@@ -339,35 +503,74 @@ footer {
 .dark-mode .match {
   background: #2a2a2a;
 }
-.dark-mode .match-progress {
+.dark-mode .match .match-progress {
   background: #555;
 }
-.dark-mode .match-progress-bar {
+.dark-mode .match .match-progress-bar {
   background: #bb86fc;
 }
 .dark-mode footer {
   background: #2a2a2a;
   color: #bbb;
 }
-.dark-mode #allUsersDisplay table,
-.dark-mode #allUsersDisplay th,
-.dark-mode #allUsersDisplay td {
+.dark-mode .user-card {
   background: #2a2a2a;
-  color: #f0f0f0;
-  border-color: #666;
+}
+.dark-mode .user-card button.delete-btn {
+  background: #e74c3c;
+}
+.dark-mode .modal-content {
+  background: #2c2c2c;
+  color: #fff;
+}
+.dark-mode .close-btn {
+  color: #fff;
+}
+.dark-mode .modal-body .row .label {
+  color: #fff;
+}
+.dark-mode .modal-body .row .value {
+  color: #eee;
 }
 
 /* ----------------------------------------------------
-   11. Responsive
+   RESPONSIVE
 ---------------------------------------------------- */
 @media (max-width: 700px) {
+  .existing-user-container {
+    flex-direction: column;
+  }
+  .existing-user-controls {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;
+  }
+  .existing-user-controls input[type="text"] {
+    width: 100%;
+  }
+  .existing-user-controls button {
+    width: 100%;
+  }
   .btns {
     flex-direction: column;
     gap: 0.5rem;
   }
-  .prev-btn,
-  .next-btn,
-  .submit-btn {
+  .btns button {
+    width: 100%;
+  }
+  .matches-grid {
+    grid-template-columns: 1fr;
+  }
+  .all-users-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-content {
+    width: 95%;
+    max-width: none;
+    max-height: 90vh;
+  }
+  .modal-body .row .label,
+  .modal-body .row .value {
     width: 100%;
   }
 }
