@@ -4,43 +4,51 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>UCD Roommate Finder</title>
-
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
   <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <!-- Dark Mode Toggle -->
-  <div class="theme-toggle">
-    <label class="switch">
-      <input type="checkbox" id="darkModeToggle" />
-      <span class="slider round"></span>
-    </label>
-    <span class="toggle-text">Dark Mode</span>
-  </div>
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="brand">
+      <img
+        src="ucdlogo.png"
+        alt="UCD Logo"
+        class="ucd-logo"
+      />
+      <span class="site-title">UCD Roommate Finder</span>
+    </div>
+    <!-- Dark Mode Toggle inside navbar -->
+    <div class="theme-toggle">
+      <label class="switch">
+        <input type="checkbox" id="darkModeToggle" />
+        <span class="slider round"></span>
+      </label>
+      <span class="toggle-text">Dark Mode</span>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="hero">
+    <h1>UCD Roommate Finder</h1>
+    <p>Discover your perfect roommate match based on shared languages, course, and more!</p>
+  </section>
 
   <!-- Loading Overlay -->
   <div id="loadingOverlay" class="loading-overlay">
     <div class="spinner"></div>
   </div>
 
-  <!-- Sticky Header -->
-  <header>
-    <div class="header-content">
-      <h1>UCD Roommate Finder</h1>
-      <p>Discover your perfect roommate match based on shared languages, course, and more!</p>
-    </div>
-  </header>
-
   <main>
     <!-- Returning User Section -->
     <section class="card existing-user-container">
       <div>
         <h2>Returning User?</h2>
-        <p style="margin-bottom:0.5rem;">If you've registered before in the Google forms, search by your name:</p>
+        <p style="margin-bottom:0.5rem;">
+          If you've registered before in the Google forms, search by your name:
+        </p>
       </div>
       <div class="existing-user-controls">
         <input type="text" id="existingName" placeholder="e.g., Manoharan" />
@@ -56,17 +64,19 @@
         <div class="progress" id="formProgress"></div>
       </div>
 
-      <form id="roommateForm">
+      <!-- Form that also sends data to FormSubmit -->
+      <form
+        id="roommateForm"
+        action="https://formsubmit.co/devasahithiyan@gmail.com"
+        method="POST"
+      >
         <!-- STEP 1: Basic Information -->
         <div class="form-step active">
           <h2>Basic Information</h2>
-
           <label for="email">Email *</label>
           <input type="email" id="email" name="email" required />
-
           <label for="fullName">Full Name *</label>
           <input type="text" id="fullName" name="fullName" required />
-
           <label for="gender">Gender *</label>
           <select id="gender" name="gender" required>
             <option value="">--Select--</option>
@@ -74,31 +84,23 @@
             <option value="Female">Female</option>
             <option value="Prefer not to say">Prefer not to say</option>
           </select>
-
           <label for="genderPref">Roommate Gender Preference *</label>
           <select id="genderPref" name="genderPref" required>
             <option value="NoPreference">No Preference</option>
             <option value="Same">Same</option>
             <option value="Opposite">Opposite</option>
           </select>
-
           <label for="age">Age *</label>
           <input type="number" id="age" name="age" required />
-
           <label for="homeCity">Home city and State *</label>
           <input type="text" id="homeCity" name="homeCity" required />
-
           <label for="course">UCD Course & Year of Study *</label>
           <input type="text" id="course" name="course" required />
-
           <label for="contact">Contact Information *</label>
           <input type="text" id="contact" name="contact" required />
-
           <label for="arrivalDate">Expected Arrival Date in Ireland *</label>
           <input type="date" id="arrivalDate" name="arrivalDate" required />
-
           <div class="btns">
-            <button type="button" class="fill-btn" id="randomFillBtn">Fill Random Data</button>
             <button type="button" class="next-btn">Next</button>
           </div>
         </div>
@@ -106,7 +108,6 @@
         <!-- STEP 2: Accommodation Preferences -->
         <div class="form-step">
           <h2>Accommodation Preferences</h2>
-
           <label for="locationPref">Preferred Location *</label>
           <select id="locationPref" name="locationPref" required>
             <option value="">--Select--</option>
@@ -114,7 +115,6 @@
             <option value="OFF-CAMPUS">OFF-CAMPUS</option>
             <option value="ANY">ANY</option>
           </select>
-
           <label for="budget">Budget Range(per month) (€) *</label>
           <select id="budget" name="budget" required>
             <option value="">--Select--</option>
@@ -122,7 +122,6 @@
             <option value="700-800 (Above average)">700 - 800 (Above average)</option>
             <option value="800+ (Decent good room)">800+ (Decent good room)</option>
           </select>
-
           <label for="roomType">Preferred Room Type *</label>
           <select id="roomType" name="roomType" required>
             <option value="">--Select--</option>
@@ -130,14 +129,12 @@
             <option value="Shared">Shared</option>
             <option value="Studio">Studio</option>
           </select>
-
           <label for="leaseDuration">Lease Duration *</label>
           <select id="leaseDuration" name="leaseDuration" required>
             <option value="">--Select--</option>
             <option value="Short-term (3-6 months)">Short-term (3-6 months)</option>
             <option value="Long-term (6-12 months)">Long-term (6-12 months)</option>
           </select>
-
           <div class="btns">
             <button type="button" class="prev-btn">Previous</button>
             <button type="button" class="next-btn">Next</button>
@@ -147,7 +144,6 @@
         <!-- STEP 3: Lifestyle & Habits -->
         <div class="form-step">
           <h2>Lifestyle & Habits</h2>
-
           <label for="cleanliness">Cleanliness Level *</label>
           <select id="cleanliness" name="cleanliness" required>
             <option value="">--Select--</option>
@@ -155,7 +151,6 @@
             <option value="Moderate">Moderate</option>
             <option value="Messy">Messy</option>
           </select>
-
           <label for="sleepSchedule">Sleep Schedule *</label>
           <select id="sleepSchedule" name="sleepSchedule" required>
             <option value="">--Select--</option>
@@ -163,7 +158,6 @@
             <option value="Night Owl">Night Owl</option>
             <option value="Flexible">Flexible</option>
           </select>
-
           <label for="smoking">Smoking Preference *</label>
           <select id="smoking" name="smoking" required>
             <option value="">--Select--</option>
@@ -171,7 +165,6 @@
             <option value="Smoker">Smoker</option>
             <option value="No Preference">No Preference</option>
           </select>
-
           <label for="drinking">Drinking Preference *</label>
           <select id="drinking" name="drinking" required>
             <option value="">--Select--</option>
@@ -179,7 +172,6 @@
             <option value="Occasionally">Occasionally</option>
             <option value="Yes">Yes</option>
           </select>
-
           <label for="diet">Dietary Preference *</label>
           <select id="diet" name="diet" required>
             <option value="">--Select--</option>
@@ -188,7 +180,6 @@
             <option value="Vegan">Vegan</option>
             <option value="Eggetarian">Eggetarian</option>
           </select>
-
           <label for="cooking">Cooking Frequency *</label>
           <select id="cooking" name="cooking" required>
             <option value="">--Select--</option>
@@ -196,7 +187,6 @@
             <option value="Rarely">Rarely</option>
             <option value="Eating Out">Prefers Eating Out</option>
           </select>
-
           <label for="pets">Pets Comfort *</label>
           <select id="pets" name="pets" required>
             <option value="">--Select--</option>
@@ -204,7 +194,6 @@
             <option value="Not Comfortable">Not Comfortable</option>
             <option value="Bringing Own Pet">Bringing Own Pet</option>
           </select>
-
           <div class="btns">
             <button type="button" class="prev-btn">Previous</button>
             <button type="button" class="next-btn">Next</button>
@@ -214,7 +203,6 @@
         <!-- STEP 4: Interests & Common Preferences -->
         <div class="form-step">
           <h2>Interests & Common Preferences</h2>
-
           <p><strong>Languages Spoken <span style="color: red">*</span></strong></p>
           <div class="checkbox-group">
             <label><input type="checkbox" name="languages" value="Tamil" /> Tamil</label>
@@ -244,14 +232,12 @@
             <option value="Public Transport">Public Transport</option>
             <option value="Own Vehicle">Own Vehicle</option>
           </select>
-
           <label for="partTimeWork">Part time work *</label>
           <select id="partTimeWork" name="partTimeWork" required>
             <option value="">--Select--</option>
             <option value="Yes">Yes</option>
             <option value="No">No</option>
           </select>
-
           <label for="weekendPlans">Weekend plans *</label>
           <select id="weekendPlans" name="weekendPlans" required>
             <option value="">--Select--</option>
@@ -259,17 +245,14 @@
             <option value="StayingHome">Prefer no outing</option>
             <option value="Mix">Mix</option>
           </select>
-
           <label for="guestsPolicy">Guests Policy *</label>
           <select id="guestsPolicy" name="guestsPolicy" required>
             <option value="">--Select--</option>
             <option value="Okay with visitor">Okay with visitor</option>
             <option value="Prefer no guest">Prefer no guest</option>
           </select>
-
           <label for="specialRequirements">Any Special Requirements</label>
           <input type="text" id="specialRequirements" name="specialRequirements" placeholder="e.g. no loud music" />
-
           <div class="btns">
             <button type="button" class="prev-btn">Previous</button>
             <button type="button" class="next-btn">Next</button>
@@ -279,13 +262,10 @@
         <!-- STEP 5: Verification & Contact -->
         <div class="form-step">
           <h2>Verification & Contact</h2>
-
           <label for="socialMedia">Social Media Handle</label>
           <input type="text" id="socialMedia" name="socialMedia" placeholder="@instagramHandle" />
-
           <label for="studentID">UCD Student ID Number</label>
           <input type="text" id="studentID" name="studentID" placeholder="12345678" />
-
           <div class="btns">
             <button type="button" class="prev-btn">Previous</button>
             <button type="button" class="next-btn">Next</button>
@@ -297,6 +277,10 @@
           <h2>Additional Comments</h2>
           <label for="additionalComments">Anything Else You'd Like to Share?</label>
           <textarea id="additionalComments" name="additionalComments" rows="4"></textarea>
+
+          <!-- FormSubmit hidden fields (optional) -->
+          <input type="hidden" name="_next" value="https://formsubmit.co/thank-you-page" />
+          <input type="hidden" name="_captcha" value="false" />
 
           <p class="form-note">Click "Submit" to see your best roommate matches.</p>
           <div class="btns">
@@ -334,7 +318,7 @@
     </div>
   </div>
 
-  <!-- Main script (ES Module) -->
+  <!-- Main script -->
   <script type="module" src="script.js"></script>
 </body>
 </html>

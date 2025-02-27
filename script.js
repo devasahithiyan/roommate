@@ -2,7 +2,7 @@
   1. Firebase Initialization (Replace config!)
 *****************************************************/
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // TODO: Replace with your actual Firebase config:
 const firebaseConfig = {
@@ -28,7 +28,6 @@ const stepIndicator = document.getElementById("stepIndicator");
 
 let currentStep = 0;
 
-/** Check if all required fields in the current step are filled. */
 function validateCurrentStep(stepIndex) {
   const stepEl = formSteps[stepIndex];
   const requiredFields = stepEl.querySelectorAll("[required]");
@@ -109,7 +108,6 @@ async function fetchFirebaseUsers() {
     const snapshot = await getDocs(collection(window.db, "users"));
     snapshot.forEach(docSnap => {
       const data = docSnap.data();
-      // Store the docId for deletion
       data.docId = docSnap.id;
       firebaseUsers.push(data);
     });
@@ -135,7 +133,7 @@ function parseBudget(budgetStr) {
 }
 
 function budgetsOverlap(b1, b2) {
-  if (!b1 || !b2) return true; 
+  if (!b1 || !b2) return true;
   return !(b1.max < b2.min || b2.max < b1.min);
 }
 
@@ -198,7 +196,7 @@ function calculateRawScore(userObj, candidateObj) {
   if (user.transport.toLowerCase() === cand.transport.toLowerCase()) score += 3;
   if (user.guestsPolicy.toLowerCase() === cand.guestsPolicy.toLowerCase()) score += 2;
 
-  // Regional Language Bonus
+  // Language overlap
   const userLangs = user.languages.toLowerCase().split(",").map(x => x.trim());
   const candLangs = cand.languages.toLowerCase().split(",").map(x => x.trim());
   const userRegional = userLangs.filter(l => l !== "english" && l);
@@ -213,12 +211,12 @@ function calculateRawScore(userObj, candidateObj) {
     score += 3;
   }
 
-  // Course Bonus
+  // Same Course Bonus
   if (user.course.trim().toLowerCase() === cand.course.trim().toLowerCase()) {
     score += 20;
   }
 
-  // Hobbies Bonus
+  // Hobbies Overlap
   const userHobbies = user.hobbies.toLowerCase().split(",").map(x => x.trim());
   const candHobbies = cand.hobbies.toLowerCase().split(",").map(x => x.trim());
   let hobbyOverlap = 0;
@@ -232,6 +230,7 @@ function calculateRawScore(userObj, candidateObj) {
 }
 
 function findKNearestMatches(userObj, candidates, k) {
+  // Deduplicate by name
   const uniqueMap = new Map();
   for (const c of candidates) {
     const cName = (c["Name"] || "").toLowerCase().trim();
@@ -250,7 +249,7 @@ function findKNearestMatches(userObj, candidates, k) {
 }
 
 /****************************************************
-  7. Modal Handling (for full user data)
+  7. Modal Handling
 *****************************************************/
 const modalOverlay = document.getElementById("userModal");
 const modalCloseBtn = document.getElementById("closeModal");
@@ -276,7 +275,7 @@ modalCloseBtn.addEventListener("click", () => {
 });
 
 /****************************************************
-  8. Display Matches (cards clickable => modal)
+  8. Display Matches
 *****************************************************/
 const resultsSection = document.getElementById("results-section");
 const resultsDiv = document.getElementById("results");
@@ -315,11 +314,9 @@ function displayTopMatches(scoredMatches) {
       <p><strong>Hobbies:</strong> ${hobbies}</p>
       <p><strong>Contact:</strong> ${contact}</p>
     `;
-
     matchDiv.addEventListener("click", () => {
       openUserModal(c);
     });
-
     resultsDiv.appendChild(matchDiv);
   });
 
@@ -415,14 +412,25 @@ form.addEventListener("submit", async (e) => {
 
   showLoading();
   try {
+    // 1) Save to Firestore
     await addDoc(collection(window.db, "users"), newUserDoc);
     await fetchFirebaseUsers();
+
+    // 2) Send data to FormSubmit (AJAX)
+    await fetch("https://formsubmit.co/ajax/devasahithiyan@gmail.com", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newUserDoc),
+    });
+    console.log("Data also sent to FormSubmit.co successfully!");
+
   } catch (err) {
-    console.error("Error adding user:", err);
+    console.error("Error adding user or sending email:", err);
   } finally {
     hideLoading();
   }
 
+  // Display matches
   const newName = (newUserDoc["Name"] || "").toLowerCase().trim();
   const allCandidates = firebaseUsers.filter(u => {
     const cName = (u["Name"] || "").toLowerCase().trim();
@@ -430,11 +438,10 @@ form.addEventListener("submit", async (e) => {
   });
   const nearest = findKNearestMatches(newUserDoc, allCandidates, K);
   displayTopMatches(nearest);
-  renderAllUsers();
 });
 
 /****************************************************
- 11. View All Users => Card Layout + Delete
+ 11. View All Users
 *****************************************************/
 const viewAllBtn = document.getElementById("viewAllBtn");
 const allUsersGrid = document.getElementById("allUsersGrid");
@@ -451,8 +458,7 @@ function renderAllUsers() {
     allUsersGrid.innerHTML = "<p>No users found!</p>";
     return;
   }
-
-  // Sort users by name (ascending order)
+  // Sort by Name
   firebaseUsers.sort((a, b) => {
     const nameA = (a["Name"] || "").toLowerCase();
     const nameB = (b["Name"] || "").toLowerCase();
@@ -465,118 +471,18 @@ function renderAllUsers() {
     const course = userDoc["UCD Course & Year of Study"] || "N/A";
     const budget = userDoc["Budget Range(per month) (€)"] || "N/A";
     const contact = userDoc["Contact Information"] || "N/A";
-    const docId = userDoc["docId"];
 
     const card = document.createElement("div");
     card.classList.add("user-card");
     card.innerHTML = `
-      <button class="delete-btn" data-docid="${docId}">Delete</button>
       <h3>${name}</h3>
       <small><strong>Course:</strong> ${course}</small>
       <small><strong>Budget:</strong> ${budget}</small>
       <small><strong>Contact:</strong> ${contact}</small>
     `;
-
     card.addEventListener("click", () => {
       openUserModal(userDoc);
     });
-
-    const deleteBtn = card.querySelector(".delete-btn");
-    deleteBtn.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      if (confirm("Are you sure you want to delete this user?")) {
-        try {
-          showLoading();
-          const docRef = doc(window.db, "users", docId);
-          await deleteDoc(docRef);
-          await fetchFirebaseUsers();
-          renderAllUsers();
-        } catch (err) {
-          console.error("Error deleting doc:", err);
-        } finally {
-          hideLoading();
-        }
-      }
-    });
-
     allUsersGrid.appendChild(card);
   });
 }
-
-/****************************************************
- 12. Random Fill Button
-*****************************************************/
-const randomFillBtn = document.getElementById("randomFillBtn");
-randomFillBtn.addEventListener("click", () => {
-  const names = ["Alice Johnson","Bob Singh","Carol Tan","David Lee","Evelyn Roy","Frank Murphy","Georgia Paul","Vishal Singh J"];
-  const cities = ["Chennai, TN","Bangalore, KA","Cochin, KL","Mumbai, MH","Dublin, IE","Galway, IE"];
-  const courses = ["MSc CS 1st Year","MBA 2nd Year","MEng 1st Year","MA 1st Year","Marketing 2025"];
-  const contactSamples = ["+91 9999999999", "email@example.com", "Telegram @xyz","+971551072879"];
-  const randomName = names[Math.floor(Math.random() * names.length)];
-  const randomCity = cities[Math.floor(Math.random() * cities.length)];
-  const randomCourse = courses[Math.floor(Math.random() * courses.length)];
-  const randomContact = contactSamples[Math.floor(Math.random() * contactSamples.length)];
-  const randomAge = Math.floor(Math.random() * 10) + 20;
-  const randomGender = ["Male","Female","Prefer not to say"][Math.floor(Math.random()*3)];
-  const randomPref = ["NoPreference","Same","Opposite"][Math.floor(Math.random()*3)];
-
-  document.getElementById("email").value = `test${Math.floor(Math.random()*1000)}@example.com`;
-  document.getElementById("fullName").value = randomName;
-  document.getElementById("gender").value = randomGender;
-  document.getElementById("genderPref").value = randomPref;
-  document.getElementById("age").value = randomAge;
-  document.getElementById("homeCity").value = randomCity;
-  document.getElementById("course").value = randomCourse;
-  document.getElementById("contact").value = randomContact;
-  document.getElementById("arrivalDate").value = "2025-09-01";
-
-  const locOptions = ["ANY","ON-CAMPUS","OFF-CAMPUS"];
-  const randomLoc = locOptions[Math.floor(Math.random()*locOptions.length)];
-  document.getElementById("locationPref").value = randomLoc;
-
-  const budOptions = [
-    "600-700 (Average room)",
-    "700-800 (Above average)",
-    "800+ (Decent good room)"
-  ];
-  const randomBud = budOptions[Math.floor(Math.random()*budOptions.length)];
-  document.getElementById("budget").value = randomBud;
-
-  const roomTypeOptions = ["Single","Shared","Studio"];
-  document.getElementById("roomType").value = roomTypeOptions[Math.floor(Math.random()*roomTypeOptions.length)];
-
-  const leaseOptions = ["Short-term (3-6 months)","Long-term (6-12 months)"];
-  document.getElementById("leaseDuration").value = leaseOptions[Math.floor(Math.random()*leaseOptions.length)];
-
-  document.getElementById("cleanliness").value = ["Neat","Moderate","Messy"][Math.floor(Math.random()*3)];
-  document.getElementById("sleepSchedule").value = ["Early Riser","Night Owl","Flexible"][Math.floor(Math.random()*3)];
-  document.getElementById("smoking").value = ["Non-Smoker","Smoker","No Preference"][Math.floor(Math.random()*3)];
-  document.getElementById("drinking").value = ["No","Occasionally","Yes"][Math.floor(Math.random()*3)];
-  document.getElementById("diet").value = ["Vegetarian","Non-Vegetarian","Vegan","Eggetarian"][Math.floor(Math.random()*4)];
-  document.getElementById("cooking").value = ["Often","Rarely","Eating Out"][Math.floor(Math.random()*3)];
-  document.getElementById("pets").value = ["Comfortable","Not Comfortable","Bringing Own Pet"][Math.floor(Math.random()*3)];
-
-  document.querySelectorAll('input[name="languages"]').forEach(cb => cb.checked = false);
-  document.querySelectorAll('input[name="hobbies"]').forEach(cb => cb.checked = false);
-
-  const langCheckboxes = Array.from(document.querySelectorAll('input[name="languages"]'));
-  for (let i=0; i<1+Math.floor(Math.random()*3); i++){
-    const randomCB = langCheckboxes[Math.floor(Math.random()*langCheckboxes.length)];
-    randomCB.checked = true;
-  }
-  const hobCheckboxes = Array.from(document.querySelectorAll('input[name="hobbies"]'));
-  for (let i=0; i<2+Math.floor(Math.random()*3); i++){
-    const randomCB = hobCheckboxes[Math.floor(Math.random()*hobCheckboxes.length)];
-    randomCB.checked = true;
-  }
-
-  document.getElementById("transportPref").value = ["Walking","Public Transport","Own Vehicle"][Math.floor(Math.random()*3)];
-  document.getElementById("partTimeWork").value = ["Yes","No"][Math.floor(Math.random()*2)];
-  document.getElementById("weekendPlans").value = ["Outing/travel","StayingHome","Mix"][Math.floor(Math.random()*3)];
-  document.getElementById("guestsPolicy").value = ["Okay with visitor","Prefer no guest"][Math.floor(Math.random()*2)];
-  document.getElementById("specialRequirements").value = "";
-  document.getElementById("socialMedia").value = "@testAccount";
-  document.getElementById("studentID").value = String(Math.floor(Math.random()*10000000));
-  document.getElementById("additionalComments").value = "Randomly filled data for testing!";
-  alert("Form fields randomly filled!");
-});

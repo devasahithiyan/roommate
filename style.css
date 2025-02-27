@@ -26,16 +26,64 @@ ul, li {
 }
 
 /* ----------------------------------------------------
-   DARK MODE TOGGLE
+   NAVBAR
 ---------------------------------------------------- */
-.theme-toggle {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1000;
+.navbar {
+  background: #0050c8; /* or #0080ff, whichever you prefer */
+  color: #fff;
+  padding: 0.75rem 1.5rem;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  position: sticky;
+  top: 0;
+  z-index: 999;
 }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.brand .ucd-logo {
+  width: 40px;
+  height: auto;
+}
+.site-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Move the theme-toggle inside navbar nicely */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ----------------------------------------------------
+   HERO SECTION
+---------------------------------------------------- */
+.hero {
+  background: linear-gradient(135deg, #0050c8, #0080ff);
+  text-align: center;
+  color: #fff;
+  padding: 2rem 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.hero h1 {
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+}
+.hero p {
+  font-size: 1.1rem;
+  max-width: 800px;
+  margin: 0.5rem auto 0;
+}
+
+/* ----------------------------------------------------
+   DARK MODE TOGGLE SWITCH
+---------------------------------------------------- */
 .switch {
   position: relative;
   display: inline-block;
@@ -67,13 +115,12 @@ ul, li {
   border-radius: 50%;
 }
 input:checked + .slider {
-  background-color: #0080ff;
+  background-color: #33a0ff;
 }
 input:checked + .slider:before {
   transform: translateX(20px);
 }
 .toggle-text {
-  margin-left: 0.5rem; 
   font-size: 0.9rem;
 }
 
@@ -101,31 +148,6 @@ input:checked + .slider:before {
 }
 @keyframes spin {
   100% { transform: rotate(360deg); }
-}
-
-/* ----------------------------------------------------
-   STICKY HEADER
----------------------------------------------------- */
-header {
-  background: linear-gradient(135deg, #0050c8, #0080ff);
-  text-align: center;
-  color: #fff;
-  padding: 2rem 1rem;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  position: sticky;
-  top: 0;
-  z-index: 999;
-}
-.header-content {
-  max-width: 1000px;
-  margin: 0 auto;
-}
-.header-content h1 {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-}
-.header-content p {
-  font-size: 1.1rem;
 }
 
 /* ----------------------------------------------------
@@ -291,18 +313,11 @@ form textarea {
 .prev-btn:hover {
   background: #999;
 }
-.fill-btn {
-  background: #f57c00 !important;
-}
-.fill-btn:hover {
-  background: #ef6c00 !important;
-}
 .form-note {
   margin-top: 1rem;
   font-size: 0.9rem;
   color: #666;
 }
-
 /* Highlight invalid fields */
 .invalid {
   border-color: #f00 !important;
@@ -389,26 +404,9 @@ form textarea {
   margin-bottom: 0.6rem;
   color: #666;
 }
-.user-card button.delete-btn {
-  position: absolute;
-  top: 10px; 
-  right: 10px;
-  background: #e74c3c;
-  color: #fff;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-.user-card button.delete-btn:hover {
-  background: #c0392b;
-}
 
 /* ----------------------------------------------------
    MODAL POPUP for Full User Details
-   (2-column layout for details)
 ---------------------------------------------------- */
 .modal-overlay {
   position: fixed;
@@ -416,7 +414,7 @@ form textarea {
   left: 0;
   width: 100%;
   height: 100%;
-  display: none; /* hidden by default */
+  display: none; 
   background-color: rgba(0,0,0,0.6);
   z-index: 2000;
   align-items: center;
@@ -480,6 +478,12 @@ footer {
   background: #1e1e1e;
   color: #f0f0f0;
 }
+.dark-mode .navbar {
+  background: #333;
+}
+.dark-mode .hero {
+  background: linear-gradient(135deg, #333, #666);
+}
 .dark-mode .card {
   background: #2c2c2c;
   color: #f0f0f0;
@@ -516,9 +520,6 @@ footer {
 .dark-mode .user-card {
   background: #2a2a2a;
 }
-.dark-mode .user-card button.delete-btn {
-  background: #e74c3c;
-}
 .dark-mode .modal-content {
   background: #2c2c2c;
   color: #fff;
@@ -537,6 +538,13 @@ footer {
    RESPONSIVE
 ---------------------------------------------------- */
 @media (max-width: 700px) {
+  .navbar {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .hero {
+    padding: 1.5rem 1rem;
+  }
   .existing-user-container {
     flex-direction: column;
   }
