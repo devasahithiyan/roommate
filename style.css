@@ -29,7 +29,7 @@ ul, li {
    NAVBAR
 ---------------------------------------------------- */
 .navbar {
-  background: #0050c8; /* or #0080ff, whichever you prefer */
+  background: #0050c8;
   color: #fff;
   padding: 0.75rem 1.5rem;
   display: flex;
@@ -53,8 +53,6 @@ ul, li {
   font-size: 1.25rem;
   font-weight: 600;
 }
-
-/* Move the theme-toggle inside navbar nicely */
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -403,6 +401,23 @@ form textarea {
   display: block;
   margin-bottom: 0.6rem;
   color: #666;
+}
+/* Delete button for testing */
+.delete-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: #ff4d4d;
+  border: none;
+  color: #fff;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.delete-btn:hover {
+  background: #e60000;
 }
 
 /* ----------------------------------------------------

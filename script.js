@@ -1,10 +1,10 @@
-/****************************************************
-  1. Firebase Initialization (Replace config!)
-*****************************************************/
+// Firebase Initialization
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { 
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc 
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// TODO: Replace with your actual Firebase config:
+// Replace with your actual Firebase config:
 const firebaseConfig = {
   apiKey: "AIzaSyAVLTCw2-...",
   authDomain: "roommate-a8e89.firebaseapp.com",
@@ -87,7 +87,7 @@ darkModeToggle.addEventListener("change", () => {
 });
 
 /****************************************************
-  4. Loading Overlay
+  4. Loading Overlay Functions
 *****************************************************/
 const loadingOverlay = document.getElementById("loadingOverlay");
 function showLoading() {
@@ -120,7 +120,7 @@ async function fetchFirebaseUsers() {
 fetchFirebaseUsers();
 
 /****************************************************
-  6. Matching Algorithm
+  6. Matching Algorithm & Duplicate Check
 *****************************************************/
 const MAX_POSSIBLE_SCORE = 126;
 const K = 5; // top K matches
@@ -140,6 +140,7 @@ function budgetsOverlap(b1, b2) {
 function transformUser(u) {
   return {
     name: u["Name"] || "",
+    email: u["Email"] || "",
     age: u["Age"] || "",
     gender: u["Gender"] || "",
     genderPref: u["Roommate Gender Preference"] || "NoPreference",
@@ -257,7 +258,7 @@ const modalBody = document.getElementById("userModalBody");
 
 function openUserModal(userObj) {
   const rows = [];
-  for (const key of Object.keys(userObj)) {
+  for (const key in userObj) {
     if (!userObj[key] || key === "docId") continue;
     rows.push(`
       <div class="row">
@@ -359,12 +360,13 @@ checkUserBtn.addEventListener("click", async () => {
 });
 
 /****************************************************
- 10. New User Registration & Matching
+ 10. New User Registration, Duplicate Check & Matching
 *****************************************************/
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!validateCurrentStep(currentStep)) return;
 
+  // Check that at least one language and one hobby are selected.
   const selectedLangs = Array.from(document.querySelectorAll('input[name="languages"]:checked'))
     .map(cb => cb.value);
   if (selectedLangs.length === 0) {
@@ -378,7 +380,9 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
+  // Gather new user data (including email for duplicate checking)
   const newUserDoc = {
+    "Email": document.getElementById("email").value,
     "Name": document.getElementById("fullName").value,
     "Age": document.getElementById("age").value,
     "Gender": document.getElementById("gender").value,
@@ -411,6 +415,20 @@ form.addEventListener("submit", async (e) => {
   };
 
   showLoading();
+  // Refresh users from Firestore for an up-to-date check.
+  await fetchFirebaseUsers();
+
+  // Duplicate check based on Name and Email (case-insensitive)
+  const duplicate = firebaseUsers.find(u => 
+    (u["Name"] || "").toLowerCase().trim() === newUserDoc["Name"].toLowerCase().trim() &&
+    (u["Email"] || "").toLowerCase().trim() === newUserDoc["Email"].toLowerCase().trim()
+  );
+  if (duplicate) {
+    hideLoading();
+    alert("Duplicate submission detected. A user with the same name and email already exists.");
+    return;
+  }
+
   try {
     // 1) Save to Firestore
     await addDoc(collection(window.db, "users"), newUserDoc);
@@ -423,14 +441,13 @@ form.addEventListener("submit", async (e) => {
       body: JSON.stringify(newUserDoc),
     });
     console.log("Data also sent to FormSubmit.co successfully!");
-
   } catch (err) {
     console.error("Error adding user or sending email:", err);
   } finally {
     hideLoading();
   }
 
-  // Display matches
+  // Display matches for the new user
   const newName = (newUserDoc["Name"] || "").toLowerCase().trim();
   const allCandidates = firebaseUsers.filter(u => {
     const cName = (u["Name"] || "").toLowerCase().trim();
@@ -441,7 +458,7 @@ form.addEventListener("submit", async (e) => {
 });
 
 /****************************************************
- 11. View All Users
+ 11. View All Users & Delete Option (for Testing)
 *****************************************************/
 const viewAllBtn = document.getElementById("viewAllBtn");
 const allUsersGrid = document.getElementById("allUsersGrid");
@@ -480,9 +497,31 @@ function renderAllUsers() {
       <small><strong>Budget:</strong> ${budget}</small>
       <small><strong>Contact:</strong> ${contact}</small>
     `;
+    // Click on the card opens the details modal.
     card.addEventListener("click", () => {
       openUserModal(userDoc);
     });
+    // Add a delete button (for testing only)
+    const delBtn = document.createElement("button");
+    delBtn.classList.add("delete-btn");
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (confirm(`Are you sure you want to delete ${name}? This is for testing purposes.`)) {
+        showLoading();
+        try {
+          await deleteDoc(doc(window.db, "users", userDoc.docId));
+          // Remove user from local array and re-render.
+          firebaseUsers = firebaseUsers.filter(u => u.docId !== userDoc.docId);
+          renderAllUsers();
+        } catch (err) {
+          console.error("Error deleting user:", err);
+        } finally {
+          hideLoading();
+        }
+      }
+    });
+    card.appendChild(delBtn);
     allUsersGrid.appendChild(card);
   });
 }
