@@ -4,12 +4,625 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>UCD Roommate Finder</title>
+
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  <!-- Main stylesheet -->
-  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* ========== GLOBAL RESET & BASE STYLES ========== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      height: 100%;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #fafafa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+    }
+    a {
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+    ul, li {
+      list-style: none;
+    }
+
+    /* ========== NAVBAR ========== */
+    .navbar {
+      background: #0050c8;
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .brand .ucd-logo {
+      width: 40px;
+      height: auto;
+    }
+    .site-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* ========== HERO SECTION ========== */
+    .hero {
+      background: linear-gradient(135deg, #0050c8, #0080ff);
+      text-align: center;
+      color: #fff;
+      padding: 3rem 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .hero-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .hero-subtitle {
+      font-size: 1.1rem;
+      margin: 1rem auto 0;
+      line-height: 1.4;
+      color: #f0f0f0;
+    }
+    .total-users-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 1rem;
+      margin-top: 1.5rem;
+    }
+    .total-users-container i {
+      font-size: 1.2rem;
+    }
+    .matching-info {
+      font-size: 0.95rem;
+      color: #f0f0f0;
+      margin-top: 0.5rem;
+    }
+    .helped-count {
+      font-size: 1rem;
+      font-weight: bold;
+      background: rgba(255,255,255,0.2);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+
+    /* DARK MODE TOGGLE SWITCH */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer; 
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ddd;
+      transition: 0.4s;
+      border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute; 
+      content: "";
+      height: 14px; 
+      width: 14px;
+      left: 3px; 
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s; 
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #33a0ff;
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    .toggle-text {
+      font-size: 0.9rem;
+    }
+
+    /* ========== LOADING OVERLAY ========== */
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .spinner {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #0080ff;
+      border-radius: 50%;
+      width: 50px; 
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* ========== MAIN CONTAINER & CARD ========== */
+    main {
+      flex: 1;
+      width: 90%;
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      animation: fadeInUp 0.4s ease forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* EXISTING USER SECTION */
+    .existing-user-container {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .existing-user-controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .existing-user-controls input[type="text"] {
+      padding: 0.7rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    .existing-user-controls button {
+      background: #0080ff;
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .existing-user-controls button:hover {
+      background: #0066cc;
+    }
+    .existing-user-results {
+      margin-top: 1rem;
+      font-weight: 500;
+    }
+
+    /* AUTOCOMPLETE RESULTS */
+    .autocomplete-results {
+      position: relative;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      border-top: none;
+      background: #fff;
+      z-index: 1000;
+    }
+    .autocomplete-suggestion {
+      padding: 0.5rem;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    .autocomplete-suggestion:hover {
+      background: #f0f0f0;
+    }
+
+    /* ========== MULTI-STEP FORM ========== */
+    .form-container {
+      position: relative;
+    }
+    .step-indicator {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+    .progressbar {
+      width: 100%;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .progress {
+      height: 100%;
+      width: 0;
+      background: #0080ff;
+      transition: width 0.3s;
+    }
+    .form-step {
+      display: none;
+    }
+    .form-step.active {
+      display: block;
+    }
+    form label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: 500;
+    }
+    form input[type="text"],
+    form input[type="number"],
+    form input[type="date"],
+    form input[type="email"],
+    form select,
+    form textarea {
+      width: 100%;
+      padding: 0.7rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      background: #fff;
+    }
+    form textarea {
+      resize: vertical;
+    }
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-weight: normal;
+    }
+    .note {
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      color: #666;
+    }
+    .required {
+      color: red;
+    }
+    .btns {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .btns button {
+      background: #0080ff;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .btns button:hover {
+      background: #0066cc;
+    }
+    .prev-btn {
+      background: #bbb;
+      color: #333;
+    }
+    .prev-btn:hover {
+      background: #999;
+    }
+    .form-note {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    /* ========== MATCHES SECTION ========== */
+    #results-section {
+      display: none;
+    }
+    .matches-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .match {
+      background: #fafafa;
+      padding: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      animation: fadeIn 0.5s ease forwards;
+      opacity: 0;
+      transform: translateY(10px);
+      cursor: pointer;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .match:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+    }
+    .match h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      color: #0080ff;
+    }
+    .match .match-progress {
+      height: 10px;
+      width: 100%;
+      background: #e5e5e5;
+      margin: 0.5rem 0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .match .match-progress-bar {
+      height: 100%;
+      background: #0080ff;
+      width: 0%;
+      transition: width 0.4s;
+    }
+
+    /* ========== MODAL POPUP ========== */
+    .modal-overlay {
+      position: fixed;
+      top: 0; 
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none; 
+      background-color: rgba(0,0,0,0.6);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      width: 90%;
+      max-width: 600px;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      position: relative;
+      overflow-y: auto;
+      max-height: 80vh;
+    }
+    .close-btn {
+      position: absolute;
+      top: 1rem; 
+      right: 1rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #333;
+    }
+    .close-btn:hover {
+      color: #666;
+    }
+    .modal-body {
+      margin-top: 1rem;
+    }
+    .modal-body .row {
+      display: flex;
+      margin-bottom: 0.5rem;
+    }
+    .modal-body .row .label {
+      font-weight: bold;
+      width: 40%;
+      margin-right: 0.5rem;
+      word-wrap: break-word;
+    }
+    .modal-body .row .value {
+      width: 60%;
+      word-wrap: break-word;
+    }
+
+    /* ========== FEEDBACK SECTION ========== */
+    .feedback-section {
+      text-align: center;
+      padding: 1rem;
+      border-top: 1px solid #ddd;
+    }
+    .feedback-section h2 {
+      margin-bottom: 1rem;
+    }
+    .feedback-btn {
+      background: #0080ff;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-size: 1rem;
+    }
+    .feedback-btn i {
+      margin-right: 0.5rem;
+    }
+    .feedback-btn:hover {
+      background: #0066cc;
+    }
+    .hidden {
+      display: none !important;
+    }
+
+    /* ========== FOOTER ========== */
+    footer {
+      text-align: center;
+      background: #f0f0f0;
+      padding: 1rem;
+      font-size: 0.9rem;
+      color: #555;
+      border-top: 1px solid #ddd;
+    }
+    footer .social-links {
+      margin-top: 0.5rem;
+    }
+    footer .social-links a {
+      color: #0050c8;
+      margin: 0 0.5rem;
+      font-size: 1.1rem;
+      transition: color 0.3s;
+    }
+    footer .social-links a:hover {
+      color: #0080ff;
+    }
+
+    /* ========== DARK MODE ========== */
+    .dark-mode {
+      background: #1e1e1e;
+      color: #f0f0f0;
+    }
+    .dark-mode .navbar {
+      background: #333;
+    }
+    .dark-mode .hero {
+      background: linear-gradient(135deg, #333, #666);
+    }
+    .dark-mode .card {
+      background: #2c2c2c;
+      color: #f0f0f0;
+    }
+    .dark-mode input,
+    .dark-mode select,
+    .dark-mode textarea {
+      background: #3a3a3a;
+      color: #f0f0f0;
+      border: 1px solid #666;
+    }
+    .dark-mode .progressbar {
+      background: #555;
+    }
+    .dark-mode .progress {
+      background: #bb86fc;
+    }
+    .dark-mode .spinner {
+      border-top: 8px solid #bb86fc;
+    }
+    .dark-mode .match {
+      background: #2a2a2a;
+    }
+    .dark-mode .match .match-progress {
+      background: #555;
+    }
+    .dark-mode .match .match-progress-bar {
+      background: #bb86fc;
+    }
+    .dark-mode footer {
+      background: #2a2a2a;
+      color: #bbb;
+    }
+    .dark-mode .modal-content {
+      background: #2c2c2c;
+      color: #fff;
+    }
+    .dark-mode .close-btn {
+      color: #fff;
+    }
+    .dark-mode .modal-body .row .label {
+      color: #fff;
+    }
+    .dark-mode .modal-body .row .value {
+      color: #eee;
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 700px) {
+      .hero {
+        padding: 2rem 1rem;
+      }
+      .hero-subtitle {
+        font-size: 1rem;
+      }
+      .total-users-container,
+      .helped-count,
+      .matching-info {
+        font-size: 0.95rem;
+      }
+      .navbar {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .existing-user-container {
+        flex-direction: column;
+      }
+      .existing-user-controls {
+        flex-direction: column;
+        width: 100%;
+        align-items: stretch;
+      }
+      .existing-user-controls input[type="text"] {
+        width: 100%;
+      }
+      .existing-user-controls button {
+        width: 100%;
+      }
+      .btns {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .matches-grid {
+        grid-template-columns: 1fr;
+      }
+      .modal-content {
+        width: 95%;
+        max-width: none;
+        max-height: 90vh;
+      }
+      .modal-body .row .label,
+      .modal-body .row .value {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
   <!-- NAVBAR -->
@@ -72,6 +685,7 @@
     </section>
 
     <!-- Multi-step Form Section -->
+    <!-- NOTE: We rely on custom JS submission (no action/method). -->
     <section class="card form-container" id="formContainer">
       <div class="step-indicator" id="stepIndicator"></div>
       <div class="progressbar">
@@ -79,7 +693,7 @@
       </div>
       
       <!-- Form -->
-      <form id="roommateForm" action="https://formsubmit.co/devasahithiyan@gmail.com" method="POST">
+      <form id="roommateForm">
         <!-- STEP 1: Basic Information -->
         <div class="form-step active">
           <h2>Basic Information</h2>
@@ -293,10 +907,6 @@
           <label for="additionalComments">Anything Else You'd Like to Share?</label>
           <textarea id="additionalComments" name="additionalComments" rows="4"></textarea>
 
-          <!-- FormSubmit hidden fields (optional) -->
-          <input type="hidden" name="_next" value="https://formsubmit.co/thank-you-page" />
-          <input type="hidden" name="_captcha" value="false" />
-
           <p class="form-note">Click "Submit" to see your best roommate matches.</p>
           <div class="btns">
             <button type="button" class="prev-btn">Previous</button>
@@ -343,7 +953,659 @@
     </div>
   </div>
 
-  <!-- Main script -->
-  <script type="module" src="script.js"></script>
+  <!-- Main script: Use type="module" and run from http:// or https:// (NOT file://) -->
+  <script type="module">
+    /****************************************************
+     * 1. Firebase Imports & Initialization
+     ****************************************************/
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      doc,
+      getDoc,
+      updateDoc,
+      setDoc,
+      increment
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // Replace with your actual Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAVLTCw2-...",
+      authDomain: "roommate-a8e89.firebaseapp.com",
+      projectId: "roommate-a8e89",
+      storageBucket: "roommate-a8e89.firebasestorage.app",
+      messagingSenderId: "583407477445",
+      appId: "1:583407477445:web:8ec652955ce67ed49806ac"
+    };
+    const app = initializeApp(firebaseConfig);
+    window.db = getFirestore(app);
+
+    /****************************************************
+     * 2. Debug Log Helper
+     ****************************************************/
+    function debugLog(message, data) {
+      console.log(`[DEBUG] ${message}`, data || '');
+    }
+
+    /****************************************************
+     * 3. Loading Overlay
+     ****************************************************/
+    let loadingCounter = 0;
+    const loadingOverlay = document.getElementById("loadingOverlay");
+
+    function showLoading() {
+      loadingCounter++;
+      loadingOverlay.style.display = "flex";
+    }
+
+    function hideLoading() {
+      loadingCounter--;
+      if (loadingCounter <= 0) {
+        loadingCounter = 0;
+        loadingOverlay.style.display = "none";
+      }
+    }
+
+    /****************************************************
+     * 4. Multi-step Form Setup
+     ****************************************************/
+    const form = document.getElementById("roommateForm");
+    const formSteps = Array.from(document.querySelectorAll(".form-step"));
+    const nextBtns = Array.from(document.querySelectorAll(".next-btn"));
+    const prevBtns = Array.from(document.querySelectorAll(".prev-btn"));
+    const formProgress = document.getElementById("formProgress");
+    const stepIndicator = document.getElementById("stepIndicator");
+
+    let currentStep = 0;
+
+    function validateCurrentStep(stepIndex) {
+      const stepEl = formSteps[stepIndex];
+      const requiredFields = stepEl.querySelectorAll("[required]");
+      let valid = true;
+      requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+          valid = false;
+          field.classList.add("invalid");
+        } else {
+          field.classList.remove("invalid");
+        }
+      });
+
+      if (!valid) {
+        alert("Please fill out all required fields in this step before proceeding.");
+      }
+      return valid;
+    }
+
+    function updateFormStep(step) {
+      formSteps.forEach((el, idx) => {
+        el.classList.toggle("active", idx === step);
+      });
+      const totalSteps = formSteps.length;
+      formProgress.style.width = ((step / (totalSteps - 1)) * 100) + "%";
+      stepIndicator.textContent = `Step ${step + 1} of ${totalSteps}`;
+    }
+
+    nextBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (!validateCurrentStep(currentStep)) return;
+        if (currentStep < formSteps.length - 1) {
+          currentStep++;
+          updateFormStep(currentStep);
+        }
+      });
+    });
+
+    prevBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (currentStep > 0) {
+          currentStep--;
+          updateFormStep(currentStep);
+        }
+      });
+    });
+
+    updateFormStep(currentStep);
+
+    /****************************************************
+     * 5. Dark Mode Toggle
+     ****************************************************/
+    const darkModeToggle = document.getElementById("darkModeToggle");
+    darkModeToggle.addEventListener("change", () => {
+      document.body.classList.toggle("dark-mode");
+    });
+
+    /****************************************************
+     * 6. Fetch Firebase Users
+     ****************************************************/
+    let firebaseUsers = [];
+    const totalUsersElem = document.getElementById("totalUsers");
+
+    async function fetchFirebaseUsers() {
+      showLoading();
+      try {
+        firebaseUsers = [];
+        const snapshot = await getDocs(collection(window.db, "users"));
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          data.docId = docSnap.id;
+          firebaseUsers.push(data);
+        });
+        updateTotalUsers();
+      } catch (err) {
+        console.error("Error fetching Firebase users:", err);
+      } finally {
+        hideLoading();
+      }
+    }
+    fetchFirebaseUsers();
+
+    function updateTotalUsers() {
+      const count = firebaseUsers.length;
+      totalUsersElem.textContent = `${count} Registered Users`;
+    }
+
+    /****************************************************
+     * 7. Matching Helpers
+     ****************************************************/
+    const MAX_POSSIBLE_SCORE = 126;
+    const K = 5; // show top 5 matches
+
+    function parseBudget(budgetStr) {
+      if (!budgetStr) return null;
+      const nums = budgetStr.match(/\d+/g);
+      if (!nums || nums.length < 2) return null;
+      return { min: parseInt(nums[0], 10), max: parseInt(nums[1], 10) };
+    }
+
+    function budgetsOverlap(b1, b2) {
+      if (!b1 || !b2) return true;
+      return !(b1.max < b2.min || b2.max < b1.min);
+    }
+
+    function isGenderCompatible(user, candidate) {
+      function sideAllows(gPref, selfGender, otherGender) {
+        if (!gPref || gPref === "NoPreference") return true;
+        if (gPref === "Same") return selfGender === otherGender;
+        if (gPref === "Opposite") return selfGender !== otherGender;
+        return true;
+      }
+      const userOk = sideAllows(user.genderPref, user.gender, candidate.gender);
+      const candOk = sideAllows(candidate.genderPref, candidate.gender, user.gender);
+      return userOk && candOk;
+    }
+
+    function isLocationCompatible(uLoc, cLoc) {
+      if (!uLoc || !cLoc) return true;
+      if (uLoc === "ANY" || cLoc === "ANY") return true;
+      return uLoc === cLoc;
+    }
+
+    function isLeaseCompatible(uLease, cLease) {
+      if (!uLease || !cLease) return true;
+      return uLease === cLease;
+    }
+
+    /****************************************************
+     * 8. Transform User & Calculate Score
+     ****************************************************/
+    function transformUser(u) {
+      return {
+        name: u["Name"] || u["fullName"] || "",
+        email: u["Email"] || u["email"] || "",
+        age: u["Age"] || u["age"] || "",
+        gender: u["Gender"] || u["gender"] || "",
+        genderPref: u["Roommate Gender Preference"] || u["genderPref"] || "NoPreference",
+        homeCity: u["Home city and State"] || u["homeCity"] || "",
+        course: u["UCD Course & Year of Study"] || u["course"] || "",
+        contact: u["Contact Information"] || u["contact"] || "",
+        arrivalDate: u["Expected Arrival Date in Ireland"] || u["arrivalDate"] || "",
+        locationPref: u["Preferred Location"] || u["locationPref"] || "ANY",
+        budget: u["Budget Range(per month) (€)"] || u["budget"] || "",
+        roomType: u["Preferred Room Type"] || u["roomType"] || "",
+        leaseDuration: u["Lease Duration"] || u["leaseDuration"] || "",
+        weekendPlans: u["Weekend plans"] || u["weekendPlans"] || "",
+        partTime: u["Part time work"] || u["partTimeWork"] || "",
+        transport: u["Preferred Mode of Transport"] || u["transportPref"] || "",
+        guestsPolicy: u["Guests Policy"] || u["guestsPolicy"] || "",
+        cleanliness: u["Cleanliness Level"] || u["cleanliness"] || "",
+        sleepSchedule: u["Sleep Schedule"] || u["sleepSchedule"] || "",
+        smoking: u["Smoking Preference"] || u["smoking"] || "",
+        drinking: u["Drinking Preference"] || u["drinking"] || "",
+        diet: u["Dietary Preference"] || u["diet"] || "",
+        cooking: u["Cooking Frequency"] || u["cooking"] || "",
+        pets: u["Pets Comfort"] || u["pets"] || "",
+        languages: u["Languages Spoken"] || (Array.isArray(u["languages"]) ? u["languages"].join(", ") : u["languages"] || ""),
+        hobbies: u["Hobbies & Interests"] || (Array.isArray(u["hobbies"]) ? u["hobbies"].join(", ") : u["hobbies"] || ""),
+        docId: u["docId"] || ""
+      };
+    }
+
+    function calculateRawScore(userObj, candidateObj) {
+      try {
+        const user = transformUser(userObj);
+        const cand = transformUser(candidateObj);
+        debugLog(`Calculating score: ${user.name} vs. ${cand.name}`);
+      
+        // Hard checks
+        if (!isGenderCompatible(user, cand)) {
+          debugLog("Failed gender check");
+          return 0;
+        }
+        if (!isLocationCompatible(user.locationPref, cand.locationPref)) {
+          debugLog("Failed location check");
+          return 0;
+        }
+        if (!isLeaseCompatible(user.leaseDuration, cand.leaseDuration)) {
+          debugLog("Failed lease check");
+          return 0;
+        }
+        const userB = parseBudget(user.budget);
+        const candB = parseBudget(cand.budget);
+        if (!budgetsOverlap(userB, candB)) {
+          debugLog("Failed budget check (no overlap)");
+          return 0;
+        }
+      
+        let score = 0;
+        // Soft checks
+        if (user.cleanliness === cand.cleanliness) score += 10;
+        if (user.sleepSchedule === cand.sleepSchedule) score += 8;
+        if (user.smoking === cand.smoking) score += 5;
+        if (user.drinking === cand.drinking) score += 5;
+        if (user.diet === cand.diet) score += 7;
+        if (user.cooking === cand.cooking) score += 5;
+        if (user.pets === cand.pets) score += 5;
+        if (user.weekendPlans.toLowerCase() === cand.weekendPlans.toLowerCase()) score += 5;
+        if (user.partTime.toLowerCase() === cand.partTime.toLowerCase()) score += 3;
+        if (user.transport.toLowerCase() === cand.transport.toLowerCase()) score += 3;
+        if (user.guestsPolicy.toLowerCase() === cand.guestsPolicy.toLowerCase()) score += 2;
+      
+        // Language matching
+        const userLangs = user.languages.toLowerCase().split(",").map(x => x.trim());
+        const candLangs = cand.languages.toLowerCase().split(",").map(x => x.trim());
+        const userRegional = userLangs.filter(l => l !== "english" && l);
+        const candRegional = candLangs.filter(l => l !== "english" && l);
+        let regionalOverlap = 0;
+        userRegional.forEach(lang => {
+          if (candRegional.includes(lang)) {
+            regionalOverlap++;
+          }
+        });
+        // Cap the regional overlap at 2 for weighting
+        if (regionalOverlap > 2) regionalOverlap = 2;
+        score += regionalOverlap * 20;
+        // If no regional overlap, but both speak English => small bump
+        if (regionalOverlap === 0 && userLangs.includes("english") && candLangs.includes("english")) {
+          score += 3;
+        }
+      
+        // Same course => big synergy
+        if (user.course.trim().toLowerCase() === cand.course.trim().toLowerCase()) {
+          score += 20;
+        }
+      
+        // Hobbies overlap
+        const userHobbies = user.hobbies.toLowerCase().split(",").map(x => x.trim());
+        const candHobbies = cand.hobbies.toLowerCase().split(",").map(x => x.trim());
+        let hobbyOverlap = 0;
+        userHobbies.forEach(h => {
+          if (candHobbies.includes(h)) {
+            hobbyOverlap++;
+          }
+        });
+        // Cap hobby overlap
+        if (hobbyOverlap > 4) hobbyOverlap = 4;
+        score += hobbyOverlap * 2;
+      
+        debugLog(`Score for ${user.name} vs. ${cand.name}: ${score}`);
+        return score;
+      } catch (err) {
+        console.error("Error in score calculation:", err);
+        return 0;
+      }
+    }
+
+    /****************************************************
+     * 9. Find K Nearest Matches & Display
+     ****************************************************/
+    function findKNearestMatches(userObj, candidates, k) {
+      const scored = candidates.map(candidate => ({
+        candidate,
+        score: calculateRawScore(userObj, candidate)
+      }));
+      scored.sort((a, b) => b.score - a.score);
+      return scored.slice(0, k);
+    }
+
+    const modalOverlay = document.getElementById("userModal");
+    const modalCloseBtn = document.getElementById("closeModal");
+    const modalBody = document.getElementById("userModalBody");
+
+    function openUserModal(userObj) {
+      const rows = [];
+      for (const key in userObj) {
+        if (!userObj[key] || key === "docId") continue;
+        rows.push(`
+          <div class="row">
+            <div class="label">${key}:</div>
+            <div class="value">${userObj[key]}</div>
+          </div>
+        `);
+      }
+      modalBody.innerHTML = rows.join("") || "<p>No additional details found.</p>";
+      modalOverlay.style.display = "flex";
+    }
+
+    modalCloseBtn.addEventListener("click", () => {
+      modalOverlay.style.display = "none";
+    });
+
+    const resultsSection = document.getElementById("results-section");
+    const resultsDiv = document.getElementById("results");
+    const feedbackSection = document.querySelector(".feedback-section");
+
+    function displayTopMatches(scoredMatches) {
+      resultsDiv.innerHTML = "";
+      resultsSection.style.display = "block";
+      if (scoredMatches.length === 0) {
+        resultsDiv.innerHTML = "<p>No matches found based on your criteria.</p>";
+        return;
+      }
+      const matchesWithPercentage = scoredMatches.map(m => {
+        const pct = ((m.score / MAX_POSSIBLE_SCORE) * 100).toFixed(0);
+        return { candidate: m.candidate, percentage: parseInt(pct, 10) };
+      });
+      matchesWithPercentage.forEach(match => {
+        const c = match.candidate;
+        const name = c["Name"] || "Unknown";
+        const course = c["UCD Course & Year of Study"] || "N/A";
+        const budget = c["Budget Range(per month) (€)"] || "N/A";
+        const contact = c["Contact Information"] || "N/A";
+        const hobbies = c["Hobbies & Interests"] || "N/A";
+        const matchDiv = document.createElement("div");
+        matchDiv.classList.add("match");
+        matchDiv.innerHTML = `
+          <h3>${name} (Match: ${match.percentage}%)</h3>
+          <div class="match-progress">
+            <div class="match-progress-bar" style="width: ${match.percentage}%;"></div>
+          </div>
+          <p><strong>Course:</strong> ${course}</p>
+          <p><strong>Budget:</strong> ${budget}</p>
+          <p><strong>Hobbies:</strong> ${hobbies}</p>
+          <p><strong>Contact:</strong> ${contact}</p>
+        `;
+        matchDiv.addEventListener("click", () => {
+          openUserModal(c);
+        });
+        resultsDiv.appendChild(matchDiv);
+      });
+      resultsSection.scrollIntoView({ behavior: "smooth" });
+      // Show feedback section
+      feedbackSection.classList.remove("hidden");
+    }
+
+    /****************************************************
+     * 10. Returning User Search & Autocomplete
+     ****************************************************/
+    const checkUserBtn = document.getElementById("checkUserBtn");
+    const existingNameInput = document.getElementById("existingName");
+    const existingUserResults = document.getElementById("existingUserResults");
+    const autocompleteResults = document.getElementById("autocompleteResults");
+
+    checkUserBtn.addEventListener("click", async () => {
+      const searchName = existingNameInput.value.trim().toLowerCase();
+      if (!searchName) {
+        existingUserResults.innerHTML = "<p style='color:red'>Please enter a name.</p>";
+        return;
+      }
+      
+      showLoading();
+      try {
+        await fetchFirebaseUsers();
+        const foundUser = firebaseUsers.find(u => {
+          const userName = (u["Name"] || "").toLowerCase().trim();
+          return userName.includes(searchName) || searchName.includes(userName);
+        });
+        if (!foundUser) {
+          existingUserResults.innerHTML = `<p style="color:red">User not found. Please register below!</p>`;
+          return;
+        }
+        
+        existingUserResults.innerHTML = `<p style="color:green">User found! Calculating matches...</p>`;
+        const allCandidates = firebaseUsers.filter(u => u.docId !== foundUser.docId);
+        const nearest = findKNearestMatches(foundUser, allCandidates, K);
+        displayTopMatches(nearest);
+        
+        if (nearest.length === 0) {
+          existingUserResults.innerHTML = `<p style="color:red">No matches found based on your criteria.</p>`;
+        } else {
+          existingUserResults.innerHTML = `<p style="color:green">Found ${nearest.length} match(es). See below!</p>`;
+          resultsSection.scrollIntoView({ behavior: "smooth" });
+        }
+      } catch (err) {
+        console.error("Error finding matches:", err);
+        existingUserResults.innerHTML = `<p style="color:red">An error occurred while finding matches. Please try again.</p>`;
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // Autocomplete logic
+    existingNameInput.addEventListener("input", () => {
+      const query = existingNameInput.value.trim().toLowerCase();
+      autocompleteResults.innerHTML = "";
+      if (query.length === 0) return;
+      
+      const suggestions = firebaseUsers.filter(u => {
+        const userName = (u["Name"] || "").toLowerCase();
+        return userName.includes(query);
+      });
+      
+      suggestions.forEach(u => {
+        const suggestionItem = document.createElement("div");
+        suggestionItem.classList.add("autocomplete-suggestion");
+        suggestionItem.textContent = u["Name"];
+        suggestionItem.addEventListener("click", () => {
+          existingNameInput.value = u["Name"];
+          autocompleteResults.innerHTML = "";
+        });
+        autocompleteResults.appendChild(suggestionItem);
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!existingNameInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+        autocompleteResults.innerHTML = "";
+      }
+    });
+
+    /****************************************************
+     * 11. Duplicate Check (Defensive .toLowerCase)
+     ****************************************************/
+    function isDuplicateUser(newUser, existingUsers) {
+      // Defensive string conversion
+      const newName = typeof newUser["Name"] === "string" ? newUser["Name"] : "";
+      const newEmail = typeof newUser["Email"] === "string" ? newUser["Email"] : "";
+      const newContact = typeof newUser["Contact Information"] === "string" ? newUser["Contact Information"] : "";
+      const newStudentID = typeof newUser["UCD Student ID Number"] === "string" ? newUser["UCD Student ID Number"] : "";
+
+      const newNameLower = newName.toLowerCase().trim();
+      const newEmailLower = newEmail.toLowerCase().trim();
+      const newContactLower = newContact.toLowerCase().trim();
+      const newStudentIDLower = newStudentID.toLowerCase().trim();
+
+      return existingUsers.some(u => {
+        // Convert existing fields to strings safely
+        const uNameRaw = typeof u["Name"] === "string" ? u["Name"] : "";
+        const uEmailRaw = typeof u["Email"] === "string" ? u["Email"] : "";
+        const uContactRaw = typeof u["Contact Information"] === "string" ? u["Contact Information"] : "";
+        const uStudentIDRaw = typeof u["UCD Student ID Number"] === "string" ? u["UCD Student ID Number"] : "";
+
+        const uName = uNameRaw.toLowerCase().trim();
+        const uEmail = uEmailRaw.toLowerCase().trim();
+        const uContact = uContactRaw.toLowerCase().trim();
+        const uStudentID = uStudentIDRaw.toLowerCase().trim();
+
+        // Log if we find a non-string
+        if (typeof u["Contact Information"] !== "string" && u["Contact Information"] !== undefined) {
+          console.log(`[DEBUG] Non-string "Contact Information" in docId: ${u.docId}. Type: ${typeof u["Contact Information"]}`, u["Contact Information"]);
+        }
+
+        // 1) Email match
+        if (newEmailLower && newEmailLower === uEmail) {
+          return true;
+        }
+
+        // 2) Student ID match
+        if (newStudentIDLower && newStudentIDLower === uStudentID) {
+          return true;
+        }
+
+        // 3) Name + Contact combo match
+        if (newNameLower && uName === newNameLower &&
+            newContactLower && uContact === newContactLower) {
+          return true;
+        }
+
+        return false;
+      });
+    }
+
+    /****************************************************
+     * 12. Form Submission Handler
+     ****************************************************/
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      // Ensure final step required fields are valid
+      if (!validateCurrentStep(currentStep)) return;
+
+      // Ensure at least one language & hobby selected (Step 4)
+      const selectedLangs = Array.from(document.querySelectorAll('input[name="languages"]:checked'))
+        .map(cb => cb.value);
+      if (selectedLangs.length === 0) {
+        alert("Please select at least one Language.");
+        return;
+      }
+      const selectedHobbies = Array.from(document.querySelectorAll('input[name="hobbies"]:checked'))
+        .map(cb => cb.value);
+      if (selectedHobbies.length === 0) {
+        alert("Please select at least one Hobby.");
+        return;
+      }
+
+      showLoading();
+      try {
+        // Reload the user list in case new data was added
+        await fetchFirebaseUsers();
+
+        // Build new user doc
+        const newUserDoc = {
+          "Email": document.getElementById("email").value.trim(),
+          "Name": document.getElementById("fullName").value.trim(),
+          "Age": document.getElementById("age").value.trim(),
+          "Gender": document.getElementById("gender").value,
+          "Roommate Gender Preference": document.getElementById("genderPref").value,
+          "Home city and State": document.getElementById("homeCity").value.trim(),
+          "UCD Course & Year of Study": document.getElementById("course").value.trim(),
+          "Contact Information": document.getElementById("contact").value.trim(),
+          "Expected Arrival Date in Ireland": document.getElementById("arrivalDate").value,
+          "Preferred Location": document.getElementById("locationPref").value,
+          "Budget Range(per month) (€)": document.getElementById("budget").value,
+          "Preferred Room Type": document.getElementById("roomType").value,
+          "Lease Duration": document.getElementById("leaseDuration").value,
+          "Cleanliness Level": document.getElementById("cleanliness").value,
+          "Sleep Schedule": document.getElementById("sleepSchedule").value,
+          "Smoking Preference": document.getElementById("smoking").value,
+          "Drinking Preference": document.getElementById("drinking").value,
+          "Dietary Preference": document.getElementById("diet").value,
+          "Cooking Frequency": document.getElementById("cooking").value,
+          "Pets Comfort": document.getElementById("pets").value,
+          "Preferred Mode of Transport": document.getElementById("transportPref").value,
+          "Part time work": document.getElementById("partTimeWork").value,
+          "Weekend plans": document.getElementById("weekendPlans").value,
+          "Guests Policy": document.getElementById("guestsPolicy").value,
+          "Languages Spoken": selectedLangs.join(", "),
+          "Hobbies & Interests": selectedHobbies.join(", "),
+          "Any Special Requirements": document.getElementById("specialRequirements").value.trim(),
+          "Social Media Handle": document.getElementById("socialMedia").value.trim(),
+          "UCD Student ID Number": document.getElementById("studentID").value.trim(),
+          "Anything Else You'd Like to Share?": document.getElementById("additionalComments").value.trim()
+        };
+
+        // Check duplicates
+        if (isDuplicateUser(newUserDoc, firebaseUsers)) {
+          hideLoading();
+          alert("A user with the same email, student ID, or name+contact already exists.\nIf you need to update info, please contact the admin.");
+          return;
+        }
+
+        // Add to Firestore
+        const docRef = await addDoc(collection(window.db, "users"), newUserDoc);
+        debugLog("Document written with ID: ", docRef.id);
+        newUserDoc.docId = docRef.id;
+
+        // Optional: Send data to formsubmit.co for email (needs domain whitelisting)
+        await fetch("https://formsubmit.co/ajax/devasahithiyan@gmail.com", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newUserDoc),
+        });
+
+        // Refetch to get updated list
+        await fetchFirebaseUsers();
+
+        // Find top matches
+        const allCandidates = firebaseUsers.filter(u => u.docId !== newUserDoc.docId);
+        const nearest = findKNearestMatches(newUserDoc, allCandidates, K);
+        displayTopMatches(nearest);
+
+        alert("Registration successful! Scroll down to see your matches.");
+        
+      } catch (err) {
+        console.error("Error adding user or sending email:", err);
+        alert("There was an error processing your submission. Please try again.");
+      } finally {
+        hideLoading();
+      }
+    });
+
+    /****************************************************
+     * 13. Global Helped Count
+     ****************************************************/
+    const helpedDocRef = doc(window.db, "globalCounters", "helpedCount");
+    const helpedCountText = document.getElementById("helpedCountText");
+
+    async function initGlobalHelpedCount() {
+      try {
+        const docSnap = await getDoc(helpedDocRef);
+        if (!docSnap.exists()) {
+          // If it doesn't exist, create it
+          await setDoc(helpedDocRef, { count: 0 });
+          helpedCountText.textContent = "Helped 0 users so far";
+        } else {
+          helpedCountText.textContent = `Helped ${docSnap.data().count} users so far`;
+        }
+      } catch (err) {
+        console.error("Error initializing global helped count: ", err);
+      }
+    }
+    initGlobalHelpedCount();
+
+    const helpfulBtn = document.getElementById("helpfulBtn");
+    helpfulBtn.addEventListener("click", async () => {
+      try {
+        await updateDoc(helpedDocRef, { count: increment(1) });
+        await initGlobalHelpedCount();
+        alert("Thank you for your feedback!");
+      } catch (err) {
+        console.error("Error updating helped count: ", err);
+        alert("There was an error processing your feedback. Please try again.");
+      }
+    });
+  </script>
 </body>
 </html>
