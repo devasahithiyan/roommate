@@ -6,6 +6,8 @@
   <title>UCD Roommate Finder</title>
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -28,8 +30,24 @@
 
   <!-- HERO SECTION -->
   <section class="hero">
-    <h1>UCD Roommate Finder</h1>
-    <p>Discover your perfect roommate match based on shared languages, course, and more!</p>
+    <div class="hero-content">
+      <h1>UCD Roommate Finder</h1>
+      <p class="hero-subtitle">
+        Discover your perfect roommate match based on shared languages, course, and more!
+      </p>
+      
+      <!-- Total Users Badge -->
+      <div class="total-users-container">
+        <i class="fas fa-users"></i>
+        <span id="totalUsers">0 Registered Users</span>
+      </div>
+      <p class="matching-info">
+        The more users, the better the matching accuracy!
+      </p>
+      
+      <!-- Helped Count (remains in hero for better visibility) -->
+      <p id="helpedCountText" class="helped-count">Helped 0 users so far</p>
+    </div>
   </section>
 
   <!-- Loading Overlay -->
@@ -42,12 +60,14 @@
     <section class="card existing-user-container">
       <div>
         <h2>Returning User?</h2>
-        <p style="margin-bottom:0.5rem;">If you've registered before, search by your name:</p>
+        <p>If you've registered before, search by your name:</p>
       </div>
       <div class="existing-user-controls">
-        <input type="text" id="existingName" placeholder="e.g., Manoharan" />
+        <input type="text" id="existingName" placeholder="e.g., Manoharan" autocomplete="off" />
         <button id="checkUserBtn">Check</button>
       </div>
+      <!-- Autocomplete Suggestions Container -->
+      <div id="autocompleteResults" class="autocomplete-results"></div>
       <div id="existingUserResults" class="existing-user-results"></div>
     </section>
 
@@ -57,8 +77,8 @@
       <div class="progressbar">
         <div class="progress" id="formProgress"></div>
       </div>
-
-      <!-- Form that also sends data to FormSubmit -->
+      
+      <!-- Form -->
       <form id="roommateForm" action="https://formsubmit.co/devasahithiyan@gmail.com" method="POST">
         <!-- STEP 1: Basic Information -->
         <div class="form-step active">
@@ -175,7 +195,7 @@
             <option value="">--Select--</option>
             <option value="Often">Often</option>
             <option value="Rarely">Rarely</option>
-            <option value="Eating Out">Prefers Eating Out</option>
+            <option value="Prefers Eating Out">Prefers Eating Out</option>
           </select>
           <label for="pets">Pets Comfort *</label>
           <select id="pets" name="pets" required>
@@ -193,17 +213,22 @@
         <!-- STEP 4: Interests & Common Preferences -->
         <div class="form-step">
           <h2>Interests & Common Preferences</h2>
-          <p><strong>Languages Spoken <span style="color: red">*</span></strong></p>
+          <p><strong>Languages Spoken <span class="required">*</span></strong></p>
           <div class="checkbox-group">
             <label><input type="checkbox" name="languages" value="Tamil" /> Tamil</label>
             <label><input type="checkbox" name="languages" value="English" /> English</label>
             <label><input type="checkbox" name="languages" value="Malayalam" /> Malayalam</label>
             <label><input type="checkbox" name="languages" value="Kannada" /> Kannada</label>
             <label><input type="checkbox" name="languages" value="Hindi" /> Hindi</label>
+            <label><input type="checkbox" name="languages" value="Telugu" /> Telugu</label>
+            <label><input type="checkbox" name="languages" value="Bengali" /> Bengali</label>
+            <label><input type="checkbox" name="languages" value="Marathi" /> Marathi</label>
+            <label><input type="checkbox" name="languages" value="Punjabi" /> Punjabi</label>
+            <label><input type="checkbox" name="languages" value="Urdu" /> Urdu</label>
           </div>
           <p class="note">Please select at least one language.</p>
 
-          <p><strong>Hobbies & Interests <span style="color: red">*</span></strong></p>
+          <p><strong>Hobbies & Interests <span class="required">*</span></strong></p>
           <div class="checkbox-group">
             <label><input type="checkbox" name="hobbies" value="Cooking" /> Cooking</label>
             <label><input type="checkbox" name="hobbies" value="Gaming" /> Gaming</label>
@@ -287,16 +312,26 @@
       <div id="results" class="matches-grid"></div>
     </section>
 
-    <!-- View All Users Section -->
-    <section class="card">
-      <h2>View All Registered Users</h2>
-      <button id="viewAllBtn">View All Users</button>
-      <div id="allUsersGrid" class="all-users-grid"></div>
+    <!-- Feedback Section (initially hidden) -->
+    <section class="card feedback-section hidden">
+      <h2>Was this helpful?</h2>
+      <button id="helpfulBtn" class="feedback-btn"><i class="fas fa-thumbs-up"></i> Yes</button>
     </section>
   </main>
 
   <footer>
     <p>&copy; 2025 UCD Roommate Finder | All rights reserved.</p>
+    <div class="social-links">
+      <p>
+        If you like my work, follow me on 
+        <a href="https://github.com/devasahithiyan" target="_blank"><i class="fab fa-github"></i> GitHub</a> and 
+        <a href="https://www.instagram.com/devasahithiyan" target="_blank"><i class="fab fa-instagram"></i> Instagram</a>.
+      </p>
+      <p>
+        If you find any issues or misentered your data, please contact me on 
+        <a href="https://wa.me/919994810395" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>.
+      </p>
+    </div>
   </footer>
 
   <!-- Modal for Full User Data -->
