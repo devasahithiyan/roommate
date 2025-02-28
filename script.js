@@ -1,7 +1,7 @@
 // Firebase Initialization
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, deleteDoc, doc
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, setDoc, increment
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // Replace with your actual Firebase config:
@@ -135,9 +135,6 @@ async function fetchFirebaseUsers() {
 }
 fetchFirebaseUsers();
 
-/****************************************************
-  Update Total Registered Users UI
-*****************************************************/
 function updateTotalUsers() {
   const count = firebaseUsers.length;
   totalUsersElem.textContent = `${count} Registered Users`;
@@ -453,7 +450,39 @@ document.addEventListener("click", (e) => {
 });
 
 /****************************************************
-  8. New User Registration & Duplicate Check
+  8. Enhanced Duplicate Check Function
+*****************************************************/
+function isDuplicateUser(newUser, existingUsers) {
+  const newNameLower = (newUser["Name"] || "").toLowerCase().trim();
+  const newEmailLower = (newUser["Email"] || "").toLowerCase().trim();
+  const newContactLower = (newUser["Contact Information"] || "").toLowerCase().trim();
+  const newStudentID = (newUser["UCD Student ID Number"] || "").toLowerCase().trim();
+  
+  return existingUsers.some(u => {
+    // Check for email match (email should be unique)
+    if (newEmailLower && (u["Email"] || "").toLowerCase().trim() === newEmailLower) {
+      return true;
+    }
+    
+    // Check for student ID match if provided
+    if (newStudentID && (u["UCD Student ID Number"] || "").toLowerCase().trim() === newStudentID) {
+      return true;
+    }
+    
+    // Check for matching name AND contact info
+    const uName = (u["Name"] || "").toLowerCase().trim();
+    const uContact = (u["Contact Information"] || "").toLowerCase().trim();
+    if (newNameLower && uName === newNameLower &&
+        newContactLower && uContact === newContactLower) {
+      return true;
+    }
+    
+    return false;
+  });
+}
+
+/****************************************************
+  9. New User Registration & Duplicate Check (Enhanced)
 *****************************************************/
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -508,17 +537,10 @@ form.addEventListener("submit", async (e) => {
       "Anything Else You'd Like to Share?": document.getElementById("additionalComments").value
     };
     
-    const newNameLower = (newUserDoc["Name"] || "").toLowerCase().trim();
-    const newEmailLower = (newUserDoc["Email"] || "").toLowerCase().trim();
-    const duplicate = firebaseUsers.find(u => {
-      const uName = (u["Name"] || "").toLowerCase().trim();
-      const uEmail = (u["Email"] || "").toLowerCase().trim();
-      return (uName === newNameLower && uEmail === newEmailLower);
-    });
-    
-    if (duplicate) {
+    // Use our enhanced duplicate check function
+    if (isDuplicateUser(newUserDoc, firebaseUsers)) {
       hideLoading();
-      alert("Duplicate submission detected. A user with the same name and email already exists.");
+      alert("A user with the same email, student ID, or name and contact information already exists. If you need to update your information, please contact the administrator.");
       return;
     }
     
@@ -548,27 +570,38 @@ form.addEventListener("submit", async (e) => {
 });
 
 /****************************************************
-  11. Feedback: "Was this helpful?" and Count
+  10. Global Helped Count via Firestore
 *****************************************************/
-const helpfulBtn = document.getElementById("helpfulBtn");
+// Reference to the global helped count document.
+const helpedDocRef = doc(window.db, "globalCounters", "helpedCount");
 const helpedCountText = document.getElementById("helpedCountText");
 
-function updateHelpedCount() {
-  let count = localStorage.getItem("helpfulCount");
-  if (!count) {
-    count = 0;
-    localStorage.setItem("helpfulCount", count);
+// Initialize or fetch the global helped count.
+async function initGlobalHelpedCount() {
+  try {
+    const docSnap = await getDoc(helpedDocRef);
+    if (!docSnap.exists()) {
+      // If the document does not exist, create it with count 0.
+      await setDoc(helpedDocRef, { count: 0 });
+      helpedCountText.textContent = "Helped 0 users so far";
+    } else {
+      helpedCountText.textContent = `Helped ${docSnap.data().count} users so far`;
+    }
+  } catch (err) {
+    console.error("Error initializing global helped count: ", err);
   }
-  helpedCountText.textContent = `Helped ${count} users so far`;
 }
+initGlobalHelpedCount();
 
-helpfulBtn.addEventListener("click", () => {
-  let count = parseInt(localStorage.getItem("helpfulCount")) || 0;
-  count++;
-  localStorage.setItem("helpfulCount", count);
-  updateHelpedCount();
-  alert("Thank you for your feedback!");
+const helpfulBtn = document.getElementById("helpfulBtn");
+helpfulBtn.addEventListener("click", async () => {
+  try {
+    // Increment the count atomically.
+    await updateDoc(helpedDocRef, { count: increment(1) });
+    await initGlobalHelpedCount();
+    alert("Thank you for your feedback!");
+  } catch (err) {
+    console.error("Error updating helped count: ", err);
+    alert("There was an error processing your feedback. Please try again.");
+  }
 });
-
-// Initialize the helped count on page load
-updateHelpedCount();
